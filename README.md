@@ -1,19 +1,21 @@
-# Open Myau
+# MyauAP
 
 ![Preview](/images/image2.png)
 
-[Myau Client](https://myau.sell.app/), for those who can’t afford it.
+<p align="center">
+  <a href="https://myau.sell.app/"><strong>Myau Client</strong></a> for those who can't afford it.
+</p>
 
-Based on **`Myau-250910`**, with added features and improvements not found in the original, focused on expanding and refining the original Myau client.
+<p align="center">
+  Based on <code>OpenMyau</code>, expanding and refining the original with more features and improvements.
+</p>
 
-[![Discord](https://invidget.switchblade.xyz/yjSaTufmqU)](https://discord.gg/yjSaTufmqU)
+---
 
-## Changes
+## Features
 
-* Added Click GUI (ported from Raven B3 by blowsy)
-* Fixed bugs
-
-If you encounter an issue or have a feature suggestion, please [create an issue](https://github.com/60124808866/OpenMyau/issues).
+- **Click GUI** — ported from Raven B3 (by blowsy)
+- **Bug Fixes** — ongoing fixes for issues found in the original
 
 ## Building
 
@@ -21,10 +23,10 @@ If you encounter an issue or have a feature suggestion, please [create an issue]
 ./gradlew build
 ```
 
+## Issues
+
+Found a bug or have a feature request? Please open an [issue](https://github.com/J3y0r/MyauAP/issues).
+
 ## Contributing
 
-You can open an issue or submit a pull request to help improve Open Myau.
-
-If you’re interested in co-developing or have questions, feel free to reach out:
-
-* Discord: `60124808866_88040`
+Contributions are welcome. Feel free to open an issue or submit a pull request.
