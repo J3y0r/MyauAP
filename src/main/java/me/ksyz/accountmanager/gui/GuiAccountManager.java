@@ -8,6 +8,7 @@ import me.ksyz.accountmanager.utils.Notification;
 import me.ksyz.accountmanager.utils.TextFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
+import net.minecraft.util.Session;
 import org.apache.commons.lang3.StringUtils;
 import org.lwjgl.input.Keyboard;
 
@@ -69,6 +70,9 @@ public class GuiAccountManager extends GuiScreen {
         ));
         buttonList.add(new GuiButton(
                 5, width / 2 - 50, height - 28, 95, 20, "Add Token"
+        ));
+        buttonList.add(new GuiButton(
+                6, width / 2 + 150, height - 52, 65, 20, "Random"
         ));
 
         guiAccountList = new GuiAccountList(mc);
@@ -296,6 +300,14 @@ public class GuiAccountManager extends GuiScreen {
                 break;
                 case 5:{
                     mc.displayGuiScreen(new GuiAddToken(this));
+                }
+                break;
+                case 6: {
+                    String randomName = String.format("MyauAP%05d", (int) (Math.random() * 100000));
+                    SessionManager.set(new Session(randomName, "", "", "legacy"));
+                    notification = new Notification(TextFormatting.translate(String.format(
+                            "&aRandom offline login: %s&r", randomName
+                    )), 5000L);
                 }
                 break;
                 default: {
