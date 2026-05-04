@@ -35,9 +35,9 @@ public class Velocity extends Module {
     private boolean shouldJump = false;
     private int jumpCooldown = 0;
 
-    public final ModeProperty mode = new ModeProperty("mode", 0, new String[]{"VANILLA", "JUMP", "DELAY", "REVERSE", "LEGIT_TEST"});
-    public final IntProperty delayTicks = new IntProperty("delay-ticks", 3, 1, 20, () -> this.mode.getValue() == 2);
-    public final PercentProperty delayChance = new PercentProperty("delay-chance", 100, () -> this.mode.getValue() == 2);
+    public final ModeProperty mode = new ModeProperty("mode", 0, new String[]{"VANILLA", "JUMP", "DELAY", "REVERSE", "LEGIT_TEST", "GHOST"});
+    public final IntProperty delayTicks = new IntProperty("delay-ticks", 3, 1, 20, () -> this.mode.getValue() == 2 || this.mode.getValue() == 5);
+    public final PercentProperty delayChance = new PercentProperty("delay-chance", 100, () -> this.mode.getValue() == 2 || this.mode.getValue() == 5);
     public final PercentProperty chance = new PercentProperty("chance", 100);
     public final PercentProperty horizontal = new PercentProperty("horizontal", 0);
     public final PercentProperty vertical = new PercentProperty("vertical", 100);
@@ -111,6 +111,9 @@ public class Velocity extends Module {
                             || this.isInLiquidOrWeb()
                             || Myau.delayManager.getDelay() >= (long) this.delayTicks.getValue()
             )) {
+                if (this.mode.getValue() == 5 && this.canDelay()) {
+                    this.jumpFlag = true;
+                }
                 Myau.delayManager.setDelayState(false, DelayModules.VELOCITY);
                 this.reverseFlag = false;
             }
@@ -161,7 +164,7 @@ public class Velocity extends Module {
                 S12PacketEntityVelocity packet = (S12PacketEntityVelocity) event.getPacket();
                 if (packet.getEntityID() == mc.thePlayer.getEntityId()) {
                     LongJump longJump = (LongJump) Myau.moduleManager.modules.get(LongJump.class);
-                    if (this.mode.getValue() == 2
+                    if ((this.mode.getValue() == 2 || this.mode.getValue() == 5)
                             && !this.reverseFlag
                             && !this.canDelay()
                             && !this.isInLiquidOrWeb()
