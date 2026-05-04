@@ -85,7 +85,6 @@ public class CategoryComponent {
 
     public void render(FontRenderer renderer) {
         this.width = 92;
-        update();
         height = 0;
         for (Component moduleRenderManager : this.modulesInCategory) {
             height += moduleRenderManager.getHeight();
@@ -94,6 +93,7 @@ public class CategoryComponent {
         if (scroll > maxScroll) scroll = maxScroll;
         if (animScroll > maxScroll) animScroll = maxScroll;
         animScroll += (scroll - animScroll) * 0.2;
+        update();
         if (!this.modulesInCategory.isEmpty() && this.categoryOpened) {
             int displayHeight = Math.min(height, MAX_HEIGHT);
             Gui.drawRect(this.x - 1, this.y, this.x + this.width + 1, this.y + this.bh + displayHeight + 4, new Color(0, 0, 0, 100).getRGB());
@@ -112,8 +112,6 @@ public class CategoryComponent {
                 int compHeight = c2.getHeight();
                 if (renderHeight + compHeight > animScroll &&
                         renderHeight < animScroll + MAX_HEIGHT) {
-                    int drawY = (int) (renderHeight - animScroll);
-                    c2.setComponentStartAt(this.bh + 3 + drawY);
                     c2.draw(new AtomicInteger(0));
                 }
                 renderHeight += compHeight;
@@ -127,10 +125,12 @@ public class CategoryComponent {
     }
 
     public void update() {
-        int offset = this.bh + 3;
+        int renderHeight = 0;
         for (Component component : this.modulesInCategory) {
-            component.setComponentStartAt(offset);
-            offset += component.getHeight();
+            int compHeight = component.getHeight();
+            int drawY = (int) (renderHeight - animScroll);
+            component.setComponentStartAt(this.bh + 3 + drawY);
+            renderHeight += compHeight;
         }
     }
 
