@@ -231,7 +231,7 @@ public class KillAura extends Module {
                 return false;
             } else if (RotationUtil.angleToEntity(entityLivingBase) > this.fov.getValue().floatValue()) {
                 return false;
-            } else if (!this.throughWalls.getValue() && RotationUtil.rayTrace(entityLivingBase) != null) {
+            } else if (!this.throughWalls.getValue() && !RotationUtil.hasVisiblePoint(entityLivingBase.getEntityBoundingBox().expand(entityLivingBase.getCollisionBorderSize(), entityLivingBase.getCollisionBorderSize(), entityLivingBase.getCollisionBorderSize()))) {
                 return false;
             } else if (entityLivingBase instanceof EntityOtherPlayerMP) {
                 if (!this.players.getValue()) {

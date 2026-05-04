@@ -35,11 +35,40 @@ public class RotationUtil {
 
     public static float[] getRotationsToBox(AxisAlignedBB boundingBox, float yaw, float pitch, float maxAngle, float smoothFactor) {
         Vec3 eyePos = RotationUtil.mc.thePlayer.getPositionEyes(1.0f);
-        double minTargetY = boundingBox.minY + 0.05 * (boundingBox.maxY - boundingBox.minY);
-        double maxTargetY = boundingBox.minY + 0.75 * (boundingBox.maxY - boundingBox.minY);
-        double deltaX = (boundingBox.minX + boundingBox.maxX) / 2.0 - eyePos.xCoord;
+        double centerX = (boundingBox.minX + boundingBox.maxX) / 2.0;
+        double centerZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
+        double height = boundingBox.maxY - boundingBox.minY;
+        double[] yRatios = new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+        Vec3 bestPoint = null;
+        double bestDistSq = Double.MAX_VALUE;
+
+        for (double ratio : yRatios) {
+            double targetY = boundingBox.minY + ratio * height;
+            Vec3 targetPoint = new Vec3(centerX, targetY, centerZ);
+            if (RotationUtil.mc.theWorld.rayTraceBlocks(eyePos, targetPoint) == null) {
+                double dx = centerX - eyePos.xCoord;
+                double dy = targetY - eyePos.yCoord;
+                double dz = centerZ - eyePos.zCoord;
+                double distSq = dx * dx + dy * dy + dz * dz;
+                if (distSq < bestDistSq) {
+                    bestDistSq = distSq;
+                    bestPoint = targetPoint;
+                }
+            }
+        }
+
+        if (bestPoint != null) {
+            double deltaX = bestPoint.xCoord - eyePos.xCoord;
+            double deltaY = bestPoint.yCoord - eyePos.yCoord;
+            double deltaZ = bestPoint.zCoord - eyePos.zCoord;
+            return RotationUtil.getRotations(deltaX, deltaY, deltaZ, yaw, pitch, maxAngle, smoothFactor);
+        }
+
+        double minTargetY = boundingBox.minY + 0.05 * height;
+        double maxTargetY = boundingBox.minY + 0.75 * height;
+        double deltaX = centerX - eyePos.xCoord;
         double deltaY = eyePos.yCoord >= maxTargetY ? maxTargetY - eyePos.yCoord : (eyePos.yCoord <= minTargetY ? minTargetY - eyePos.yCoord : 0.0);
-        double deltaZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0 - eyePos.zCoord;
+        double deltaZ = centerZ - eyePos.zCoord;
         return RotationUtil.getRotations(deltaX, deltaY, deltaZ, yaw, pitch, maxAngle, smoothFactor);
     }
 
@@ -125,6 +154,23 @@ public class RotationUtil {
         float borderSize = entity.getCollisionBorderSize();
         Vec3 targetPos = RotationUtil.clampVecToBox(eyePos, entity.getEntityBoundingBox().expand(borderSize, borderSize, borderSize));
         return RotationUtil.mc.theWorld.rayTraceBlocks(eyePos, targetPos);
+    }
+
+    public static boolean hasVisiblePoint(AxisAlignedBB boundingBox) {
+        Vec3 eyePos = RotationUtil.mc.thePlayer.getPositionEyes(1.0f);
+        double centerX = (boundingBox.minX + boundingBox.maxX) / 2.0;
+        double centerZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
+        double height = boundingBox.maxY - boundingBox.minY;
+        double[] yRatios = new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+
+        for (double ratio : yRatios) {
+            double targetY = boundingBox.minY + ratio * height;
+            Vec3 targetPoint = new Vec3(centerX, targetY, centerZ);
+            if (RotationUtil.mc.theWorld.rayTraceBlocks(eyePos, targetPoint) == null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static MovingObjectPosition rayTrace(AxisAlignedBB boundingBox, float yaw, float pitch, double distance) {
