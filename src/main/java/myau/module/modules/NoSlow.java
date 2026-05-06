@@ -24,14 +24,16 @@ import net.minecraft.util.BlockPos;
 public class NoSlow extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private int lastSlot = -1;
-    public final ModeProperty swordMode = new ModeProperty("sword-mode", 1, new String[]{"NONE", "VANILLA"});
-    public final PercentProperty swordMotion = new PercentProperty("sword-motion", 100, () -> this.swordMode.getValue() != 0);
+    private int count;
+    public final ModeProperty swordMode = new ModeProperty("sword-mode", 1, new String[]{"NONE", "VANILLA", "GRIM"});
+    public final PercentProperty swordMotion = new PercentProperty("sword-motion", 100, () -> this.swordMode.getValue() == 1);
     public final BooleanProperty swordSprint = new BooleanProperty("sword-sprint", true, () -> this.swordMode.getValue() != 0);
-    public final ModeProperty foodMode = new ModeProperty("food-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT"});
-    public final PercentProperty foodMotion = new PercentProperty("food-motion", 100, () -> this.foodMode.getValue() != 0);
+    public final BooleanProperty killauraonly = new BooleanProperty("killaura-only", false, () -> this.swordMode.getValue() != 0);
+    public final ModeProperty foodMode = new ModeProperty("food-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT", "GRIM"});
+    public final PercentProperty foodMotion = new PercentProperty("food-motion", 100, () -> this.foodMode.getValue() == 1);
     public final BooleanProperty foodSprint = new BooleanProperty("food-sprint", true, () -> this.foodMode.getValue() != 0);
-    public final ModeProperty bowMode = new ModeProperty("bow-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT"});
-    public final PercentProperty bowMotion = new PercentProperty("bow-motion", 100, () -> this.bowMode.getValue() != 0);
+    public final ModeProperty bowMode = new ModeProperty("bow-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT", "GRIM"});
+    public final PercentProperty bowMotion = new PercentProperty("bow-motion", 100, () -> this.bowMode.getValue() == 1);
     public final BooleanProperty bowSprint = new BooleanProperty("bow-sprint", true, () -> this.bowMode.getValue() != 0);
 
     public NoSlow() {
@@ -39,6 +41,11 @@ public class NoSlow extends Module {
     }
 
     public boolean isSwordActive() {
+        KillAura killAura = (KillAura) Myau.moduleManager.modules.get(KillAura.class);
+        if (killauraonly.getValue()) {
+            if (!killAura.isEnabled()) return false;
+            if (killAura.getTarget() == null) return false;
+        }
         return this.swordMode.getValue() != 0 && ItemUtil.isHoldingSword();
     }
 
@@ -55,6 +62,12 @@ public class NoSlow extends Module {
                 || this.bowMode.getValue() == 2 && ItemUtil.isUsingBow();
     }
 
+    public boolean isGrimMode() {
+        return this.swordMode.getValue() == 2 && ItemUtil.isHoldingSword()
+                || this.foodMode.getValue() == 3 && ItemUtil.isEating()
+                || this.bowMode.getValue() == 3 && ItemUtil.isUsingBow();
+    }
+
     public boolean isAnyActive() {
         return mc.thePlayer.isUsingItem() && (this.isSwordActive() || this.isFoodActive() || this.isBowActive());
     }
@@ -66,13 +79,24 @@ public class NoSlow extends Module {
     }
 
     public int getMotionMultiplier() {
+        count++;
         if (ItemUtil.isHoldingSword()) {
+            if (swordMode.getValue() == 2) {
+                return count % 2 == 0 ? 100 : 20;
+            }
             return this.swordMotion.getValue();
         } else if (ItemUtil.isEating()) {
+            if (foodMode.getValue() == 3) {
+                return count % 2 == 0 ? 100 : 20;
+            }
             return this.foodMotion.getValue();
-        } else {
-            return ItemUtil.isUsingBow() ? this.bowMotion.getValue() : 100;
+        } else if (ItemUtil.isUsingBow()) {
+            if (bowMode.getValue() == 3) {
+                return count % 2 == 0 ? 100 : 20;
+            }
+            return this.bowMotion.getValue();
         }
+        return 100;
     }
 
     @EventTarget
