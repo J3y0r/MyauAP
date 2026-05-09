@@ -52,6 +52,7 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
 import org.lwjgl.opengl.GL11;
 
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -65,8 +66,7 @@ public class BackTrack extends Module {
     public final IntProperty delay = new IntProperty("delay", 400, 0, 1000);
     public final FloatProperty hitRange = new FloatProperty("range", 3.0f, 3.0f, 10.0f);
     public final BooleanProperty onlyIfNeeded = new BooleanProperty("only-if-needed", true);
-    public final BooleanProperty esp = new BooleanProperty("esp", true);
-    public final ModeProperty espMode = new ModeProperty("esp-mode", 0, new String[]{"Hitbox", "None"});
+    public final ModeProperty espMode = new ModeProperty("esp-mode", 1, new String[]{"NONE", "HITBOX", "HUD"});
 
     private final Queue<Packet> incomingPackets = new LinkedList<>();
     private final Queue<Packet> outgoingPackets = new LinkedList<>();
@@ -229,10 +229,7 @@ public class BackTrack extends Module {
 
     @EventTarget
     public void onRender3D(Render3DEvent event) {
-        if (!esp.getValue())
-            return;
-
-        if (espMode.getValue() != 0)
+        if (espMode.getValue() == 0)
             return;
 
         if (target == null)
@@ -260,14 +257,23 @@ public class BackTrack extends Module {
         GlStateManager.disableDepth();
         GlStateManager.depthMask(false);
 
-        GlStateManager.color(1F, 0F, 0F, 0.4F);
+        Color color = getEspColor();
+        GlStateManager.color(color.getRed() / 255.0F, color.getGreen() / 255.0F, color.getBlue() / 255.0F, 0.4F);
 
-        RenderGlobal.drawOutlinedBoundingBox(box, 255, 0, 0, 153);
+        RenderGlobal.drawOutlinedBoundingBox(box, color.getRed(), color.getGreen(), color.getBlue(), 153);
 
         GlStateManager.depthMask(true);
         GlStateManager.enableDepth();
         GlStateManager.enableTexture2D();
         GlStateManager.popMatrix();
+    }
+
+    private Color getEspColor() {
+        if (espMode.getValue() == 2) {
+            return ((HUD) Myau.moduleManager.modules.get(HUD.class)).getColor(System.currentTimeMillis());
+        }
+
+        return Color.RED;
     }
 
     private boolean shouldQueue() {
