@@ -139,35 +139,37 @@ public class GuiAddToken extends GuiScreen {
                     AtomicReference<String> accessToken = new AtomicReference<>("");
                     MicrosoftAuth.CLIENT_ID = "00000000402b5328";
                     MicrosoftAuth.SCOPE = "service::user.auth.xboxlive.com::MBI_SSL";
-                    task = MicrosoftAuth.login(tokenField.getText(), executor)
-                            .handle((session, error) -> session != null)
-                            .thenComposeAsync(completed -> {
-                                if (completed) {
-                                    throw new NoSuchElementException();
+                    String token = tokenField.getText().trim();
+                    task = MicrosoftAuth.login(token, executor)
+                            .handle((session, error) -> {
+                                if (session != null) {
+                                    accessToken.set(token);
+                                    return CompletableFuture.completedFuture(session);
                                 }
                                 status = "&7Refreshing Microsoft access tokens...&r";
-                                return MicrosoftAuth.refreshMSAccessTokens(tokenField.getText(), executor);
+                                return MicrosoftAuth.refreshMSAccessTokens(token, executor)
+                                        .thenComposeAsync(msAccessTokens -> {
+                                            status = "&fAcquiring Xbox access token&r";
+                                            refreshToken.set(msAccessTokens.get("refresh_token"));
+                                            return MicrosoftAuth.acquireXboxAccessToken(msAccessTokens.get("access_token"), executor);
+                                        })
+                                        .thenComposeAsync(xboxAccessToken -> {
+                                            status = "&fAcquiring Xbox XSTS token&r";
+                                            return MicrosoftAuth.acquireXboxXstsToken(xboxAccessToken, executor);
+                                        })
+                                        .thenComposeAsync(xboxXstsData -> {
+                                            status = "&fAcquiring Minecraft access token&r";
+                                            return MicrosoftAuth.acquireMCAccessToken(
+                                                    xboxXstsData.get("Token"), xboxXstsData.get("uhs"), executor
+                                            );
+                                        })
+                                        .thenComposeAsync(mcToken -> {
+                                            status = "&fFetching your Minecraft profile&r";
+                                            accessToken.set(mcToken);
+                                            return MicrosoftAuth.login(mcToken, executor);
+                                        });
                             })
-                            .thenComposeAsync(msAccessTokens -> {
-                                status = "&fAcquiring Xbox access token&r";
-                                refreshToken.set(msAccessTokens.get("refresh_token"));
-                                return MicrosoftAuth.acquireXboxAccessToken(msAccessTokens.get("access_token"), executor);
-                            })
-                            .thenComposeAsync(xboxAccessToken -> {
-                                status = "&fAcquiring Xbox XSTS token&r";
-                                return MicrosoftAuth.acquireXboxXstsToken(xboxAccessToken, executor);
-                            })
-                            .thenComposeAsync(xboxXstsData -> {
-                                status = "&fAcquiring Minecraft access token&r";
-                                return MicrosoftAuth.acquireMCAccessToken(
-                                        xboxXstsData.get("Token"), xboxXstsData.get("uhs"), executor
-                                );
-                            })
-                            .thenComposeAsync(mcToken -> {
-                                status = "&fFetching your Minecraft profile&r";
-                                accessToken.set(mcToken);
-                                return MicrosoftAuth.login(mcToken, executor);
-                            })
+                            .thenComposeAsync(sessionFuture -> sessionFuture)
                             .thenAccept(session -> {
                                 status = null;
                                 Account acc = new Account(
