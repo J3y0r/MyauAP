@@ -146,13 +146,8 @@ public class GuiAddToken extends GuiScreen {
                                     accessToken.set(token);
                                     return CompletableFuture.completedFuture(session);
                                 }
-                                status = "&7Refreshing Microsoft access tokens...&r";
-                                return MicrosoftAuth.refreshMSAccessTokens(token, executor)
-                                        .thenComposeAsync(msAccessTokens -> {
-                                            status = "&fAcquiring Xbox access token&r";
-                                            refreshToken.set(msAccessTokens.get("refresh_token"));
-                                            return MicrosoftAuth.acquireXboxAccessToken(msAccessTokens.get("access_token"), executor);
-                                        })
+                                status = "&fAcquiring Xbox access token&r";
+                                return MicrosoftAuth.acquireXboxAccessToken(token, executor)
                                         .thenComposeAsync(xboxAccessToken -> {
                                             status = "&fAcquiring Xbox XSTS token&r";
                                             return MicrosoftAuth.acquireXboxXstsToken(xboxAccessToken, executor);
@@ -167,7 +162,35 @@ public class GuiAddToken extends GuiScreen {
                                             status = "&fFetching your Minecraft profile&r";
                                             accessToken.set(mcToken);
                                             return MicrosoftAuth.login(mcToken, executor);
-                                        });
+                                        })
+                                        .handle((msSession, msError) -> {
+                                            if (msSession != null) {
+                                                return CompletableFuture.completedFuture(msSession);
+                                            }
+                                            status = "&7Refreshing Microsoft access tokens...&r";
+                                            return MicrosoftAuth.refreshMSAccessTokens(token, executor)
+                                                    .thenComposeAsync(msAccessTokens -> {
+                                                        status = "&fAcquiring Xbox access token&r";
+                                                        refreshToken.set(msAccessTokens.get("refresh_token"));
+                                                        return MicrosoftAuth.acquireXboxAccessToken(msAccessTokens.get("access_token"), executor);
+                                                    })
+                                                    .thenComposeAsync(xboxAccessToken -> {
+                                                        status = "&fAcquiring Xbox XSTS token&r";
+                                                        return MicrosoftAuth.acquireXboxXstsToken(xboxAccessToken, executor);
+                                                    })
+                                                    .thenComposeAsync(xboxXstsData -> {
+                                                        status = "&fAcquiring Minecraft access token&r";
+                                                        return MicrosoftAuth.acquireMCAccessToken(
+                                                                xboxXstsData.get("Token"), xboxXstsData.get("uhs"), executor
+                                                        );
+                                                    })
+                                                    .thenComposeAsync(mcToken -> {
+                                                        status = "&fFetching your Minecraft profile&r";
+                                                        accessToken.set(mcToken);
+                                                        return MicrosoftAuth.login(mcToken, executor);
+                                                    });
+                                        })
+                                        .thenComposeAsync(sessionFuture -> sessionFuture);
                             })
                             .thenComposeAsync(sessionFuture -> sessionFuture)
                             .thenAccept(session -> {
