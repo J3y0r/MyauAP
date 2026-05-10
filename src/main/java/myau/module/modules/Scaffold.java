@@ -8,6 +8,7 @@ import myau.events.*;
 import myau.management.RotationState;
 import myau.module.Module;
 import myau.property.properties.BooleanProperty;
+import myau.property.properties.IntProperty;
 import myau.property.properties.ModeProperty;
 import myau.property.properties.PercentProperty;
 import myau.util.*;
@@ -61,6 +62,7 @@ public class Scaffold extends Module {
     private int startY = 256;
     private boolean shouldKeepY = false;
     private boolean towering = false;
+    private int eagleDelay = 0;
     private EnumFacing targetFacing = null;
     public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS"});
     public final ModeProperty moveFix = new ModeProperty("move-fix", 1, new String[]{"NONE", "SILENT"});
@@ -76,6 +78,9 @@ public class Scaffold extends Module {
     public final BooleanProperty safeWalk = new BooleanProperty("safe-walk", true);
     public final BooleanProperty swing = new BooleanProperty("swing", true);
     public final BooleanProperty itemSpoof = new BooleanProperty("item-spoof", false);
+    public final BooleanProperty eagle = new BooleanProperty("eagle", false);
+    public final IntProperty minEagleDelay = new IntProperty("min-eagle-delay", 2, 0, 10, this.eagle::getValue);
+    public final IntProperty maxEagleDelay = new IntProperty("max-eagle-delay", 3, 0, 10, this.eagle::getValue);
     public final BooleanProperty blockCounter = new BooleanProperty("block-counter", true);
 
     private boolean shouldStopSprint() {
@@ -236,6 +241,15 @@ public class Scaffold extends Module {
         } else {
             return false;
         }
+    }
+
+    private boolean canEagleMoveSafely() {
+        double[] offset = MoveUtil.predictMovement();
+        return PlayerUtil.canMove(mc.thePlayer.motionX + offset[0], mc.thePlayer.motionZ + offset[1]);
+    }
+
+    private boolean shouldEagleSneak() {
+        return this.eagle.getValue() && ItemUtil.isHoldingBlock() && mc.thePlayer.onGround;
     }
 
     public Scaffold() {
@@ -622,6 +636,20 @@ public class Scaffold extends Module {
                     && MoveUtil.isForwardPressed()) {
                 MoveUtil.fixStrafe(RotationState.getSmoothedYaw());
             }
+            if (this.eagleDelay > 0) {
+                this.eagleDelay--;
+            }
+            if (this.shouldEagleSneak()) {
+                boolean canMoveSafely = this.canEagleMoveSafely();
+                if (this.eagleDelay == 0 && canMoveSafely) {
+                    this.eagleDelay = (int) RandomUtil.nextLong(this.minEagleDelay.getValue(), this.maxEagleDelay.getValue());
+                }
+                if (!mc.thePlayer.movementInput.sneak && (this.eagleDelay > 0 || canMoveSafely)) {
+                    mc.thePlayer.movementInput.sneak = true;
+                    mc.thePlayer.movementInput.moveStrafe *= 0.3F;
+                    mc.thePlayer.movementInput.moveForward *= 0.3F;
+                }
+            }
             if (mc.thePlayer.onGround && this.stage > 0 && MoveUtil.isForwardPressed()) {
                 mc.thePlayer.movementInput.jump = true;
             }
@@ -738,12 +766,29 @@ public class Scaffold extends Module {
         this.towerTick = 0;
         this.towerDelay = 0;
         this.towering = false;
+        this.eagleDelay = 0;
     }
 
     @Override
     public void onDisabled() {
         if (mc.thePlayer != null && this.lastSlot != -1) {
             mc.thePlayer.inventory.currentItem = this.lastSlot;
+        }
+        this.eagleDelay = 0;
+    }
+
+    @Override
+    public void verifyValue(String name) {
+        switch (name) {
+            case "min-eagle-delay":
+                if (this.minEagleDelay.getValue() > this.maxEagleDelay.getValue()) {
+                    this.maxEagleDelay.setValue(this.minEagleDelay.getValue());
+                }
+                break;
+            case "max-eagle-delay":
+                if (this.minEagleDelay.getValue() > this.maxEagleDelay.getValue()) {
+                    this.minEagleDelay.setValue(this.maxEagleDelay.getValue());
+                }
         }
     }
 
