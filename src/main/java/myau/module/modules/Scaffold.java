@@ -63,6 +63,7 @@ public class Scaffold extends Module {
     private boolean shouldKeepY = false;
     private boolean towering = false;
     private int eagleDelay = 0;
+    private boolean eagleSneaking = false;
     private EnumFacing targetFacing = null;
     public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS"});
     public final ModeProperty moveFix = new ModeProperty("move-fix", 1, new String[]{"NONE", "SILENT"});
@@ -249,7 +250,31 @@ public class Scaffold extends Module {
     }
 
     private boolean shouldEagleSneak() {
-        return this.eagle.getValue() && ItemUtil.isHoldingBlock() && mc.thePlayer.onGround;
+        return this.eagle.getValue() && ItemUtil.isHoldingBlock() && mc.thePlayer.onGround && mc.currentScreen == null;
+    }
+
+    private void updateEagleState() {
+        if (this.eagleDelay > 0) {
+            this.eagleDelay--;
+        }
+        if (!this.shouldEagleSneak()) {
+            this.eagleSneaking = false;
+            return;
+        }
+        boolean canMoveSafely = this.canEagleMoveSafely();
+        if (this.eagleDelay == 0 && canMoveSafely) {
+            this.eagleDelay = (int) RandomUtil.nextLong(this.minEagleDelay.getValue(), this.maxEagleDelay.getValue());
+        }
+        this.eagleSneaking = this.eagleDelay > 0 || canMoveSafely;
+    }
+
+    private void applyEagleSneak() {
+        if (!this.eagleSneaking || mc.thePlayer.movementInput.sneak) {
+            return;
+        }
+        mc.thePlayer.movementInput.sneak = true;
+        mc.thePlayer.movementInput.moveStrafe *= 0.3F;
+        mc.thePlayer.movementInput.moveForward *= 0.3F;
     }
 
     public Scaffold() {
@@ -263,6 +288,7 @@ public class Scaffold extends Module {
     @EventTarget(Priority.HIGH)
     public void onUpdate(UpdateEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
+            this.updateEagleState();
             if (this.rotationTick > 0) {
                 this.rotationTick--;
             }
@@ -627,7 +653,7 @@ public class Scaffold extends Module {
         }
     }
 
-    @EventTarget
+    @EventTarget(Priority.LOWEST)
     public void onMoveInput(MoveInputEvent event) {
         if (this.isEnabled()) {
             if (this.moveFix.getValue() == 1
@@ -636,20 +662,7 @@ public class Scaffold extends Module {
                     && MoveUtil.isForwardPressed()) {
                 MoveUtil.fixStrafe(RotationState.getSmoothedYaw());
             }
-            if (this.eagleDelay > 0) {
-                this.eagleDelay--;
-            }
-            if (this.shouldEagleSneak()) {
-                boolean canMoveSafely = this.canEagleMoveSafely();
-                if (this.eagleDelay == 0 && canMoveSafely) {
-                    this.eagleDelay = (int) RandomUtil.nextLong(this.minEagleDelay.getValue(), this.maxEagleDelay.getValue());
-                }
-                if (!mc.thePlayer.movementInput.sneak && (this.eagleDelay > 0 || canMoveSafely)) {
-                    mc.thePlayer.movementInput.sneak = true;
-                    mc.thePlayer.movementInput.moveStrafe *= 0.3F;
-                    mc.thePlayer.movementInput.moveForward *= 0.3F;
-                }
-            }
+            this.applyEagleSneak();
             if (mc.thePlayer.onGround && this.stage > 0 && MoveUtil.isForwardPressed()) {
                 mc.thePlayer.movementInput.jump = true;
             }
@@ -767,6 +780,7 @@ public class Scaffold extends Module {
         this.towerDelay = 0;
         this.towering = false;
         this.eagleDelay = 0;
+        this.eagleSneaking = false;
     }
 
     @Override
@@ -775,6 +789,7 @@ public class Scaffold extends Module {
             mc.thePlayer.inventory.currentItem = this.lastSlot;
         }
         this.eagleDelay = 0;
+        this.eagleSneaking = false;
     }
 
     @Override
