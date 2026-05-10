@@ -63,6 +63,7 @@ public class Scaffold extends Module {
     private boolean shouldKeepY = false;
     private boolean towering = false;
     private int eagleDelay = 0;
+    private int keepEagleTicksLeft = 0;
     private boolean eagleSneaking = false;
     private EnumFacing targetFacing = null;
     public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS"});
@@ -82,6 +83,7 @@ public class Scaffold extends Module {
     public final BooleanProperty eagle = new BooleanProperty("eagle", false);
     public final IntProperty minEagleDelay = new IntProperty("min-eagle-delay", 2, 0, 10, this.eagle::getValue);
     public final IntProperty maxEagleDelay = new IntProperty("max-eagle-delay", 3, 0, 10, this.eagle::getValue);
+    public final IntProperty keepEagleTicks = new IntProperty("keep-eagle-ticks", 3, 0, 20, this.eagle::getValue);
     public final BooleanProperty blockCounter = new BooleanProperty("block-counter", true);
 
     private boolean shouldStopSprint() {
@@ -257,7 +259,11 @@ public class Scaffold extends Module {
         if (this.eagleDelay > 0) {
             this.eagleDelay--;
         }
+        if (this.keepEagleTicksLeft > 0) {
+            this.keepEagleTicksLeft--;
+        }
         if (!this.shouldEagleSneak()) {
+            this.keepEagleTicksLeft = 0;
             this.eagleSneaking = false;
             return;
         }
@@ -265,7 +271,10 @@ public class Scaffold extends Module {
         if (this.eagleDelay == 0 && canMoveSafely) {
             this.eagleDelay = (int) RandomUtil.nextLong(this.minEagleDelay.getValue(), this.maxEagleDelay.getValue());
         }
-        this.eagleSneaking = this.eagleDelay > 0 || canMoveSafely;
+        if (canMoveSafely) {
+            this.keepEagleTicksLeft = Math.max(this.keepEagleTicksLeft, this.keepEagleTicks.getValue());
+        }
+        this.eagleSneaking = this.eagleDelay > 0 || canMoveSafely || this.keepEagleTicksLeft > 0;
     }
 
     private void applyEagleSneak() {
@@ -780,6 +789,7 @@ public class Scaffold extends Module {
         this.towerDelay = 0;
         this.towering = false;
         this.eagleDelay = 0;
+        this.keepEagleTicksLeft = 0;
         this.eagleSneaking = false;
     }
 
@@ -789,6 +799,7 @@ public class Scaffold extends Module {
             mc.thePlayer.inventory.currentItem = this.lastSlot;
         }
         this.eagleDelay = 0;
+        this.keepEagleTicksLeft = 0;
         this.eagleSneaking = false;
     }
 
