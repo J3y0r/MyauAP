@@ -278,12 +278,14 @@ public class Scaffold extends Module {
     }
 
     private void applyEagleSneak() {
-        if (!this.eagleSneaking || mc.thePlayer.movementInput.sneak) {
-            return;
+        if (this.eagleSneaking) {
+            KeyBindUtil.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), true);
+            mc.thePlayer.movementInput.sneak = true;
+            mc.thePlayer.movementInput.moveStrafe *= 0.3F;
+            mc.thePlayer.movementInput.moveForward *= 0.3F;
+        } else {
+            KeyBindUtil.updateKeyState(mc.gameSettings.keyBindSneak.getKeyCode());
         }
-        mc.thePlayer.movementInput.sneak = true;
-        mc.thePlayer.movementInput.moveStrafe *= 0.3F;
-        mc.thePlayer.movementInput.moveForward *= 0.3F;
     }
 
     public Scaffold() {
@@ -801,6 +803,7 @@ public class Scaffold extends Module {
         this.eagleDelay = 0;
         this.keepEagleTicksLeft = 0;
         this.eagleSneaking = false;
+        KeyBindUtil.updateKeyState(mc.gameSettings.keyBindSneak.getKeyCode());
     }
 
     @Override
