@@ -29,6 +29,7 @@ public class Myau {
     public static DelayManager delayManager;
     public static LagManager lagManager;
     public static PlayerStateManager playerStateManager;
+    public static BadPacketsManager badPacketsManager;
     public static FriendManager friendManager;
     public static TargetManager targetManager;
     public static PropertyManager propertyManager;
@@ -46,6 +47,7 @@ public class Myau {
         delayManager = new DelayManager();
         lagManager = new LagManager();
         playerStateManager = new PlayerStateManager();
+        badPacketsManager = new BadPacketsManager();
         friendManager = new FriendManager();
         targetManager = new TargetManager();
         propertyManager = new PropertyManager();
@@ -56,6 +58,7 @@ public class Myau {
         EventManager.register(blinkManager);
         EventManager.register(delayManager);
         EventManager.register(lagManager);
+        EventManager.register(badPacketsManager);
         EventManager.register(moduleManager);
         EventManager.register(commandManager);
         moduleManager.modules.put(AimAssist.class, new AimAssist());

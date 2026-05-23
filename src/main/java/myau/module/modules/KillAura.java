@@ -108,6 +108,8 @@ public class KillAura extends Module {
                 return false;
             } else if (this.attackDelayMS > 0L) {
                 return false;
+            } else if (this.autoBlock.getValue() != 1 && Myau.badPacketsManager.bad()) {
+                return false;
             } else {
                 this.attackDelayMS = this.attackDelayMS + this.getAttackDelay();
                 mc.thePlayer.swingItem();
