@@ -72,6 +72,20 @@ public class RotationUtil {
         return RotationUtil.getRotations(deltaX, deltaY, deltaZ, yaw, pitch, maxAngle, smoothFactor);
     }
 
+    public static float[] getRotationsToClosestPoint(AxisAlignedBB boundingBox, float yaw, float pitch, float maxAngle, float smoothFactor) {
+        Vec3 eyePos = RotationUtil.mc.thePlayer.getPositionEyes(1.0f);
+        Vec3 closestPoint = RotationUtil.clampVecToBox(eyePos, boundingBox);
+        double deltaX = closestPoint.xCoord - eyePos.xCoord;
+        double deltaY = closestPoint.yCoord - eyePos.yCoord;
+        double deltaZ = closestPoint.zCoord - eyePos.zCoord;
+        if (deltaX == 0.0 && deltaY == 0.0 && deltaZ == 0.0) {
+            deltaX = (boundingBox.minX + boundingBox.maxX) / 2.0 - eyePos.xCoord;
+            deltaY = (boundingBox.minY + boundingBox.maxY) / 2.0 - eyePos.yCoord;
+            deltaZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0 - eyePos.zCoord;
+        }
+        return RotationUtil.getRotations(deltaX, deltaY, deltaZ, yaw, pitch, maxAngle, smoothFactor);
+    }
+
     public static float[] getRotationsTo(double targetX, double targetY, double targetZ, float currentYaw, float currentPitch) {
         return RotationUtil.getRotations(targetX, targetY, targetZ, currentYaw, currentPitch, 180.0f, 0.0f);
     }

@@ -341,7 +341,7 @@ public class KillAura extends Module {
         this.minCPS = new IntProperty("min-aps", 14, 1, 20);
         this.maxCPS = new IntProperty("max-aps", 14, 1, 20);
         this.switchDelay = new IntProperty("switch-delay", 150, 0, 1000);
-        this.rotations = new ModeProperty("rotations", 2, new String[]{"NONE", "LEGIT", "SILENT", "LOCK_VIEW"});
+        this.rotations = new ModeProperty("rotations", 2, new String[]{"NONE", "LEGIT", "SILENT", "LOCK_VIEW", "BEST"});
         this.moveFix = new ModeProperty("move-fix", 1, new String[]{"NONE", "SILENT", "STRICT"});
         this.smoothing = new PercentProperty("smoothing", 0);
         this.angleStep = new IntProperty("angle-step", 90, 30, 180);
@@ -672,14 +672,25 @@ public class KillAura extends Module {
                 }
                 boolean attacked = false;
                 if (this.isBoxInSwingRange(this.target.getBox())) {
-                    if (this.rotations.getValue() == 2 || this.rotations.getValue() == 3) {
-                        float[] rotations = RotationUtil.getRotationsToBox(
-                                this.target.getBox(),
-                                event.getYaw(),
-                                event.getPitch(),
-                                (float) this.angleStep.getValue() + RandomUtil.nextFloat(-5.0F, 5.0F),
-                                (float) this.smoothing.getValue() / 100.0F
-                        );
+                    if (this.rotations.getValue() == 2 || this.rotations.getValue() == 3 || this.rotations.getValue() == 4) {
+                        float[] rotations;
+                        if (this.rotations.getValue() == 4) {
+                            rotations = RotationUtil.getRotationsToClosestPoint(
+                                    this.target.getBox(),
+                                    event.getYaw(),
+                                    event.getPitch(),
+                                    (float) this.angleStep.getValue() + RandomUtil.nextFloat(-5.0F, 5.0F),
+                                    (float) this.smoothing.getValue() / 100.0F
+                            );
+                        } else {
+                            rotations = RotationUtil.getRotationsToBox(
+                                    this.target.getBox(),
+                                    event.getYaw(),
+                                    event.getPitch(),
+                                    (float) this.angleStep.getValue() + RandomUtil.nextFloat(-5.0F, 5.0F),
+                                    (float) this.smoothing.getValue() / 100.0F
+                            );
+                        }
                         event.setRotation(rotations[0], rotations[1], 1);
                         if (this.rotations.getValue() == 3) {
                             Myau.rotationManager.setRotation(rotations[0], rotations[1], 1, true);
