@@ -65,8 +65,10 @@ public class Scaffold extends Module {
     private int eagleDelay = 0;
     private int keepEagleTicksLeft = 0;
     private boolean eagleSneaking = false;
+    private int placeDelayTick = 0;
     private EnumFacing targetFacing = null;
     public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS"});
+    public final IntProperty placeDelay = new IntProperty("place-delay", 0, 0, 20);
     public final ModeProperty moveFix = new ModeProperty("move-fix", 1, new String[]{"NONE", "SILENT"});
     public final ModeProperty sprintMode = new ModeProperty("sprint", 0, new String[]{"NONE", "VANILLA"});
     public final PercentProperty groundMotion = new PercentProperty("ground-motion", 100);
@@ -76,6 +78,7 @@ public class Scaffold extends Module {
     public final ModeProperty keepY = new ModeProperty("keep-y", 0, new String[]{"NONE", "VANILLA", "EXTRA", "TELLY"});
     public final BooleanProperty keepYonPress = new BooleanProperty("keep-y-on-press", false, () -> this.keepY.getValue() != 0);
     public final BooleanProperty disableWhileJumpActive = new BooleanProperty("no-keep-y-on-jump-potion", false, () -> this.keepY.getValue() != 0);
+    public final BooleanProperty hypixelTellyBypass = new BooleanProperty("hypixel-telly-bypass", false, () -> this.keepY.getValue() == 3);
     public final BooleanProperty multiplace = new BooleanProperty("multi-place", true);
     public final BooleanProperty safeWalk = new BooleanProperty("safe-walk", true);
     public final BooleanProperty swing = new BooleanProperty("swing", true);
@@ -303,6 +306,9 @@ public class Scaffold extends Module {
             if (this.rotationTick > 0) {
                 this.rotationTick--;
             }
+            if (this.placeDelayTick > 0) {
+                this.placeDelayTick--;
+            }
             if (mc.thePlayer.onGround) {
                 if (this.stage > 0) {
                     this.stage--;
@@ -444,7 +450,16 @@ public class Scaffold extends Module {
                     float targetPitch = this.pitch;
                     if (this.towering && (mc.thePlayer.motionY > 0.0 || mc.thePlayer.posY > (double) (this.startY + 1))) {
                         float yawDiff = MathHelper.wrapAngleTo180_float(this.yaw - event.getYaw());
-                        float tolerance = this.rotationTick >= 2 ? RandomUtil.nextFloat(90.0F, 95.0F) : RandomUtil.nextFloat(30.0F, 35.0F);
+                        float tolerance;
+                        if (this.hypixelTellyBypass.getValue() && this.keepY.getValue() == 3) {
+                            if (this.rotationTick == 2) {
+                                tolerance = 120.0F;
+                            } else {
+                                tolerance = 30.0F;
+                            }
+                        } else {
+                            tolerance = this.rotationTick >= 2 ? RandomUtil.nextFloat(90.0F, 95.0F) : RandomUtil.nextFloat(30.0F, 35.0F);
+                        }
                         if (Math.abs(yawDiff) > tolerance) {
                             float clampedYaw = RotationUtil.clampAngle(yawDiff, tolerance);
                             targetYaw = RotationUtil.quantizeAngle(event.getYaw() + clampedYaw);
@@ -454,6 +469,9 @@ public class Scaffold extends Module {
                     if (this.isTowering()) {
                         float yawDelta = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - event.getYaw());
                         targetYaw = RotationUtil.quantizeAngle(event.getYaw() + yawDelta * RandomUtil.nextFloat(0.98F, 0.99F));
+                        if (this.hypixelTellyBypass.getValue() && this.keepY.getValue() == 3) {
+                            targetYaw += RandomUtil.nextFloat(0.1F, 0.5F) * (Math.random() < 0.5 ? 1.0F : -1.0F);
+                        }
                         targetPitch = RotationUtil.quantizeAngle(RandomUtil.nextFloat(30.0F, 80.0F));
                         this.rotationTick = 3;
                         this.towering = true;
@@ -463,8 +481,12 @@ public class Scaffold extends Module {
                         event.setPervRotation(targetYaw, 3);
                     }
                 }
-                if (blockData != null && hitVec != null && this.rotationTick <= 0) {
+                boolean canPlace = (this.rotationTick <= 0
+                        || (this.hypixelTellyBypass.getValue() && this.keepY.getValue() == 3 && this.towering && this.rotationTick <= 1))
+                        && this.placeDelayTick <= 0;
+                if (blockData != null && hitVec != null && canPlace) {
                     this.place(blockData.blockPos(), blockData.facing(), hitVec);
+                    this.placeDelayTick = this.placeDelay.getValue();
                     if (this.multiplace.getValue()) {
                         for (int i = 0; i < 3; i++) {
                             blockData = this.getBlockData();
@@ -499,13 +521,14 @@ public class Scaffold extends Module {
                     }
                 }
                 if (this.targetFacing != null) {
-                    if (this.rotationTick <= 0) {
+                    if (this.rotationTick <= 0 && this.placeDelayTick <= 0) {
                         int playerBlockX = MathHelper.floor_double(mc.thePlayer.posX);
                         int playerBlockY = MathHelper.floor_double(mc.thePlayer.posY);
                         int playerBlockZ = MathHelper.floor_double(mc.thePlayer.posZ);
                         BlockPos belowPlayer = new BlockPos(playerBlockX, playerBlockY - 1, playerBlockZ);
                         hitVec = BlockUtil.getHitVec(belowPlayer, this.targetFacing, this.yaw, this.pitch);
                         this.place(belowPlayer, this.targetFacing, hitVec);
+                        this.placeDelayTick = this.placeDelay.getValue();
                     }
                     this.targetFacing = null;
                 } else if (this.keepY.getValue() == 2 && this.stage > 0 && !mc.thePlayer.onGround) {
@@ -513,9 +536,10 @@ public class Scaffold extends Module {
                     if (nextBlockY <= this.startY && mc.thePlayer.posY > (double) (this.startY + 1)) {
                         this.shouldKeepY = true;
                         blockData = this.getBlockData();
-                        if (blockData != null && this.rotationTick <= 0) {
+                        if (blockData != null && this.rotationTick <= 0 && this.placeDelayTick <= 0) {
                             hitVec = BlockUtil.getHitVec(blockData.blockPos(), blockData.facing(), this.yaw, this.pitch);
                             this.place(blockData.blockPos(), blockData.facing(), hitVec);
+                            this.placeDelayTick = this.placeDelay.getValue();
                         }
                     }
                 }
@@ -793,6 +817,7 @@ public class Scaffold extends Module {
         this.eagleDelay = 0;
         this.keepEagleTicksLeft = 0;
         this.eagleSneaking = false;
+        this.placeDelayTick = 0;
     }
 
     @Override
