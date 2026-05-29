@@ -14,9 +14,10 @@ val mixinGroup = "$baseGroup.mixin"
 val modid: String by project
 val jarName: String by project
 val transformerFile = file("src/main/resources/accesstransformer.cfg")
-// Toolchains:
+
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(8))
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 // Minecraft configuration:
 loom {
@@ -79,6 +80,7 @@ dependencies {
 // Tasks:
 tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
+    options.release.set(8)
 }
 tasks.withType(org.gradle.jvm.tasks.Jar::class) {
     archiveBaseName.set(jarName)
