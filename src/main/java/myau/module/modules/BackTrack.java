@@ -384,4 +384,9 @@ public class BackTrack extends Module {
         }
         return closest;
     }
+
+    @Override
+    public String[] getSuffix() {
+        return new String[]{String.format("%dms", this.delay.getValue())};
+    }
 }
