@@ -45,3 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Gradle 暴露了 `test` 任务，但仓库当前没有 `src/test` 目录，也没有可见的测试依赖。
 - 目前实际可依赖的验证方式主要是 `./gradlew build` 和 `./gradlew runClient` 下的手动行为检查。
+
+## Git Rules
+
+- 推送信息不要包含类似 'Co-Author: Claude' 之类的信息
