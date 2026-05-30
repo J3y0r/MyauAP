@@ -111,9 +111,6 @@ public class Velocity extends Module {
                             || this.isInLiquidOrWeb()
                             || Myau.delayManager.getDelay() >= (long) this.delayTicks.getValue()
             )) {
-                if (this.mode.getValue() == 5) {
-                    this.jumpFlag = true;
-                }
                 Myau.delayManager.setDelayState(false, DelayModules.VELOCITY);
                 this.reverseFlag = false;
             }
