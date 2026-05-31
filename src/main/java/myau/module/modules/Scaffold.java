@@ -69,7 +69,7 @@ public class Scaffold extends Module {
     private boolean eagleSneaking = false;
     private int placeDelayTick = 0;
     private EnumFacing targetFacing = null;
-    public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS"});
+    public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS", "TELLY"});
     public final ModeProperty raycastMode = new ModeProperty("raycast", 1, new String[]{"NONE", "NORMAL", "STRICT"});
     public final IntProperty placeDelay = new IntProperty("place-delay", 0, 0, 20);
     public final ModeProperty moveFix = new ModeProperty("move-fix", 1, new String[]{"NONE", "SILENT"});
@@ -226,6 +226,55 @@ public class Scaffold extends Module {
             MovingObjectPosition mop = this.getRaycast(blockPos, enumFacing, yaw, pitch);
             return mop == null ? null : mop.hitVec;
         }
+    }
+
+    private PitchRaycast getBestPitchRaycast(BlockData blockData, float yaw, float pitch) {
+        double[] x = placeOffsets;
+        double[] y = placeOffsets;
+        double[] z = placeOffsets;
+        switch (blockData.facing()) {
+            case NORTH:
+                z = new double[]{0.0};
+                break;
+            case EAST:
+                x = new double[]{1.0};
+                break;
+            case SOUTH:
+                z = new double[]{1.0};
+                break;
+            case WEST:
+                x = new double[]{0.0};
+                break;
+            case DOWN:
+                y = new double[]{0.0};
+                break;
+            case UP:
+                y = new double[]{1.0};
+        }
+        float bestPitch = 0.0F;
+        float bestDiff = 0.0F;
+        MovingObjectPosition bestRaycast = null;
+        for (double dx : x) {
+            for (double dy : y) {
+                for (double dz : z) {
+                    double relX = (double) blockData.blockPos().getX() + dx - mc.thePlayer.posX;
+                    double relY = (double) blockData.blockPos().getY() + dy - mc.thePlayer.posY - (double) mc.thePlayer.getEyeHeight();
+                    double relZ = (double) blockData.blockPos().getZ() + dz - mc.thePlayer.posZ;
+                    double horizontalDistance = Math.sqrt(relX * relX + relZ * relZ);
+                    float targetPitch = RotationUtil.quantizeAngle((float) (-Math.atan2(relY, horizontalDistance) * 180.0 / Math.PI));
+                    MovingObjectPosition mop = this.getRaycast(blockData.blockPos(), blockData.facing(), yaw, targetPitch);
+                    if (mop != null) {
+                        float pitchDiff = Math.abs(targetPitch - pitch);
+                        if (bestRaycast == null || pitchDiff < bestDiff) {
+                            bestPitch = targetPitch;
+                            bestDiff = pitchDiff;
+                            bestRaycast = mop;
+                        }
+                    }
+                }
+            }
+        }
+        return bestRaycast == null ? null : new PitchRaycast(bestPitch, bestRaycast);
     }
 
     private void place(BlockPos blockPos, EnumFacing enumFacing, Vec3 vec3) {
@@ -401,6 +450,7 @@ public class Scaffold extends Module {
                 }
                 float currentYaw = this.getCurrentYaw();
                 float yawDiffTo180 = RotationUtil.wrapAngleDiff(currentYaw - 180.0F, event.getYaw());
+                float tellyYaw = RotationUtil.wrapAngleDiff(mc.thePlayer.rotationYaw - 180.0F, event.getYaw());
                 float diagonalYaw = this.isDiagonal(currentYaw)
                         ? yawDiffTo180
                         : RotationUtil.wrapAngleDiff(currentYaw - 135.0F * ((currentYaw + 180.0F) % 90.0F < 45.0F ? 1.0F : -1.0F), event.getYaw());
@@ -428,6 +478,14 @@ public class Scaffold extends Module {
                                 this.pitch = RotationUtil.quantizeAngle(85.0F);
                             } else {
                                 this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                            }
+                            break;
+                        case 4:
+                            if (this.yaw == -180.0F && this.pitch == 0.0F) {
+                                this.yaw = RotationUtil.quantizeAngle(tellyYaw);
+                                this.pitch = RotationUtil.quantizeAngle(85.0F);
+                            } else {
+                                this.yaw = RotationUtil.quantizeAngle(tellyYaw);
                             }
                     }
                 }
@@ -485,6 +543,15 @@ public class Scaffold extends Module {
                         this.pitch = bestPitch;
                         this.canRotate = true;
                     }
+                    if (this.rotationMode.getValue() == 4) {
+                        this.yaw = RotationUtil.quantizeAngle(tellyYaw);
+                        PitchRaycast pitchRaycast = this.getBestPitchRaycast(blockData, this.yaw, this.pitch);
+                        if (pitchRaycast != null) {
+                            this.pitch = pitchRaycast.pitch();
+                            hitVec = pitchRaycast.raycast().hitVec;
+                            this.canRotate = true;
+                        }
+                    }
                 }
                 if (this.canRotate && MoveUtil.isForwardPressed() && Math.abs(MathHelper.wrapAngleTo180_float(yawDiffTo180 - this.yaw)) < 90.0F) {
                     switch (this.rotationMode.getValue()) {
@@ -526,6 +593,10 @@ public class Scaffold extends Module {
                         this.rotationTick = 3;
                         this.towering = true;
                     }
+                    if (this.rotationMode.getValue() == 4) {
+                        targetYaw = RotationUtil.quantizeAngle(tellyYaw);
+                        targetPitch = this.pitch;
+                    }
                     event.setRotation(targetYaw, targetPitch, 3);
                     if (this.moveFix.getValue() == 1) {
                         event.setPervRotation(targetYaw, 3);
@@ -541,6 +612,16 @@ public class Scaffold extends Module {
                             blockData = this.getBlockData();
                             if (blockData == null) {
                                 break;
+                            }
+                            if (this.rotationMode.getValue() == 4) {
+                                this.yaw = RotationUtil.quantizeAngle(tellyYaw);
+                                PitchRaycast pitchRaycast = this.getBestPitchRaycast(blockData, this.yaw, this.pitch);
+                                if (pitchRaycast == null) {
+                                    break;
+                                }
+                                this.pitch = pitchRaycast.pitch();
+                                this.place(blockData.blockPos(), blockData.facing(), pitchRaycast.raycast().hitVec);
+                                continue;
                             }
                             MovingObjectPosition mop = this.getRaycast(blockData.blockPos(), blockData.facing(), this.yaw, this.pitch);
                             if (mop != null) {
@@ -908,6 +989,24 @@ public class Scaffold extends Module {
 
         public EnumFacing facing() {
             return this.facing;
+        }
+    }
+
+    public static class PitchRaycast {
+        private final float pitch;
+        private final MovingObjectPosition raycast;
+
+        public PitchRaycast(float pitch, MovingObjectPosition raycast) {
+            this.pitch = pitch;
+            this.raycast = raycast;
+        }
+
+        public float pitch() {
+            return this.pitch;
+        }
+
+        public MovingObjectPosition raycast() {
+            return this.raycast;
         }
     }
 }
