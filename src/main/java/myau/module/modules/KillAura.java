@@ -61,6 +61,8 @@ public class KillAura extends Module {
     private boolean isBlocking = false;
     private boolean fakeBlockState = false;
     private boolean blinkReset = false;
+    private boolean swapped = false;
+    private boolean postBlock = false;
     private long attackDelayMS = 0L;
     private int blockTick = 0;
     private int lastTickProcessed;
@@ -76,6 +78,14 @@ public class KillAura extends Module {
     public final IntProperty fov;
     public final IntProperty minCPS;
     public final IntProperty maxCPS;
+    public final IntProperty maxTick;
+    public final IntProperty startBlinkTick;
+    public final IntProperty stopBlinkTick;
+    public final IntProperty swapTick;
+    public final IntProperty switchBackTick;
+    public final IntProperty stopBlockTick;
+    public final IntProperty attackTick;
+    public final IntProperty startBlockTick;
     public final IntProperty switchDelay;
     public final ModeProperty rotations;
     public final ModeProperty moveFix;
@@ -95,6 +105,7 @@ public class KillAura extends Module {
     public final BooleanProperty golems;
     public final BooleanProperty silverfish;
     public final BooleanProperty teams;
+    public final BooleanProperty postStartBlock;
     public final ModeProperty showTarget;
     public final ModeProperty debugLog;
 
@@ -323,13 +334,20 @@ public class KillAura extends Module {
         return -1;
     }
 
+    private void restoreSwappedSlot() {
+        if (this.swapped && mc.thePlayer != null) {
+            PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
+        }
+        this.swapped = false;
+    }
+
     public KillAura() {
         super("KillAura", false);
         this.lastTickProcessed = 0;
         this.mode = new ModeProperty("mode", 0, new String[]{"SINGLE", "SWITCH"});
         this.sort = new ModeProperty("sort", 0, new String[]{"DISTANCE", "HEALTH", "HURT_TIME", "FOV"});
         this.autoBlock = new ModeProperty(
-                "auto-block", 2, new String[]{"NONE", "VANILLA", "SPOOF", "HYPIXEL", "BLINK", "INTERACT", "SWAP", "LEGIT", "FAKE"}
+                "auto-block", 2, new String[]{"NONE", "VANILLA", "SPOOF", "HYPIXEL", "BLINK", "INTERACT", "SWAP", "LEGIT", "FAKE", "HYPIXEL_TEST", "HYPIXEL_CUSTOM"}
         );
         this.autoBlockRequirePress = new BooleanProperty("auto-block-require-press", false);
         this.autoBlockMinCPS = new FloatProperty("auto-block-min-aps", 8.0F, 1.0F, 20.0F);
@@ -340,6 +358,14 @@ public class KillAura extends Module {
         this.fov = new IntProperty("fov", 360, 30, 360);
         this.minCPS = new IntProperty("min-aps", 14, 1, 20);
         this.maxCPS = new IntProperty("max-aps", 14, 1, 20);
+        this.maxTick = new IntProperty("max-tick", 3, 1, 5, () -> this.autoBlock.getValue() == 10);
+        this.startBlinkTick = new IntProperty("start-blink-tick", 0, 0, 5, () -> this.autoBlock.getValue() == 10);
+        this.stopBlinkTick = new IntProperty("stop-blink-tick", 2, 1, 5, () -> this.autoBlock.getValue() == 10);
+        this.swapTick = new IntProperty("swap-tick", 2, 1, 5, () -> this.autoBlock.getValue() == 10);
+        this.switchBackTick = new IntProperty("switch-back-tick", 2, 1, 5, () -> this.autoBlock.getValue() == 10);
+        this.stopBlockTick = new IntProperty("stop-block-tick", 2, 1, 5, () -> this.autoBlock.getValue() == 10);
+        this.attackTick = new IntProperty("attack-tick", 0, 0, 5, () -> this.autoBlock.getValue() == 10);
+        this.startBlockTick = new IntProperty("start-block-tick", 0, 0, 5, () -> this.autoBlock.getValue() == 10);
         this.switchDelay = new IntProperty("switch-delay", 150, 0, 1000);
         this.rotations = new ModeProperty("rotations", 2, new String[]{"NONE", "LEGIT", "SILENT", "LOCK_VIEW", "BEST"});
         this.moveFix = new ModeProperty("move-fix", 1, new String[]{"NONE", "SILENT", "STRICT"});
@@ -359,6 +385,7 @@ public class KillAura extends Module {
         this.golems = new BooleanProperty("golems", false);
         this.silverfish = new BooleanProperty("silverfish", false);
         this.teams = new BooleanProperty("teams", true);
+        this.postStartBlock = new BooleanProperty("post-block", false, () -> this.autoBlock.getValue() == 10);
         this.showTarget = new ModeProperty("show-target", 0, new String[]{"NONE", "DEFAULT", "HUD"});
         this.debugLog = new ModeProperty("debug-log", 0, new String[]{"NONE", "HEALTH"});
     }
@@ -386,7 +413,9 @@ public class KillAura extends Module {
                     || this.autoBlock.getValue() == 4 // BLINK
                     || this.autoBlock.getValue() == 5 // INTERACT
                     || this.autoBlock.getValue() == 6 // SWAP
-                    || this.autoBlock.getValue() == 7); // LEGIT
+                    || this.autoBlock.getValue() == 7 // LEGIT
+                    || this.autoBlock.getValue() == 9 // HYPIXEL_TEST
+                    || this.autoBlock.getValue() == 10); // HYPIXEL_CUSTOM
         } else {
             return false;
         }
@@ -407,6 +436,10 @@ public class KillAura extends Module {
             Myau.blinkManager.setBlinkState(false, BlinkModules.AUTO_BLOCK);
             Myau.blinkManager.setBlinkState(true, BlinkModules.AUTO_BLOCK);
         }
+        if (event.getType() == EventType.POST && this.postBlock) {
+            this.sendUseItem();
+            this.postBlock = false;
+        }
         if (this.isEnabled() && event.getType() == EventType.PRE) {
             if (this.attackDelayMS > 0L) {
                 this.attackDelayMS -= 50L;
@@ -418,6 +451,8 @@ public class KillAura extends Module {
                 this.isBlocking = false;
                 this.fakeBlockState = false;
                 this.blockTick = 0;
+                this.postBlock = false;
+                this.restoreSwappedSlot();
             }
             if (attack) {
                 boolean swap = false;
@@ -668,6 +703,102 @@ public class KillAura extends Module {
                                     && !Myau.playerStateManager.placing) {
                                 swap = true;
                             }
+                            break;
+                        case 9: // HYPIXEL_TEST
+                            if (this.hasValidTarget()) {
+                                if (!Myau.playerStateManager.digging && !Myau.playerStateManager.placing) {
+                                    switch (this.blockTick) {
+                                        case 0:
+                                            blocked = true;
+                                            if (!this.isPlayerBlocking()) {
+                                                swap = true;
+                                            }
+                                            this.blockTick = 1;
+                                            break;
+                                        case 1:
+                                            if (this.isPlayerBlocking()) {
+                                                int randomSlot = new Random().nextInt(9);
+                                                while (randomSlot == mc.thePlayer.inventory.currentItem) {
+                                                    randomSlot = new Random().nextInt(9);
+                                                }
+                                                PacketUtil.sendPacket(new C09PacketHeldItemChange(randomSlot));
+                                                PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
+                                            }
+                                            attack = false;
+                                            this.blockTick = 2;
+                                            break;
+                                        case 2:
+                                            attack = false;
+                                            this.stopBlock();
+                                            if (this.attackDelayMS <= 50L) {
+                                                this.blockTick = 0;
+                                            }
+                                            break;
+                                        default:
+                                            this.blockTick = 0;
+                                    }
+                                }
+                                this.isBlocking = true;
+                                this.fakeBlockState = true;
+                            } else {
+                                Myau.blinkManager.setBlinkState(false, BlinkModules.AUTO_BLOCK);
+                                int randomSlot = new Random().nextInt(9);
+                                while (randomSlot == mc.thePlayer.inventory.currentItem) {
+                                    randomSlot = new Random().nextInt(9);
+                                }
+                                PacketUtil.sendPacket(new C09PacketHeldItemChange(randomSlot));
+                                PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
+                                this.isBlocking = false;
+                                this.fakeBlockState = false;
+                            }
+                            break;
+                        case 10: // HYPIXEL_CUSTOM
+                            if (this.hasValidTarget()) {
+                                if (!Myau.playerStateManager.digging && !Myau.playerStateManager.placing) {
+                                    if (this.blockTick + 1 == this.startBlinkTick.getValue()) {
+                                        blocked = true;
+                                    }
+                                    if (this.blockTick + 1 != this.attackTick.getValue()) {
+                                        attack = false;
+                                    }
+                                    if (this.blockTick + 1 == this.startBlockTick.getValue() && !this.isPlayerBlocking()) {
+                                        swap = true;
+                                        if (this.postStartBlock.getValue()) {
+                                            this.postBlock = true;
+                                        }
+                                    }
+                                    if (this.blockTick + 1 == this.stopBlinkTick.getValue()) {
+                                        Myau.blinkManager.setBlinkState(false, BlinkModules.AUTO_BLOCK);
+                                    }
+                                    if (this.blockTick + 1 == this.swapTick.getValue()) {
+                                        int randomSlot = new Random().nextInt(9);
+                                        while (randomSlot == mc.thePlayer.inventory.currentItem) {
+                                            randomSlot = new Random().nextInt(9);
+                                        }
+                                        PacketUtil.sendPacket(new C09PacketHeldItemChange(randomSlot));
+                                        this.swapped = true;
+                                    }
+                                    if (this.blockTick + 1 == this.switchBackTick.getValue()) {
+                                        this.restoreSwappedSlot();
+                                    }
+                                    if (this.blockTick + 1 == this.stopBlockTick.getValue() && this.isPlayerBlocking()) {
+                                        this.stopBlock();
+                                    }
+                                    this.blockTick++;
+                                    if (this.blockTick >= this.maxTick.getValue() - 1) {
+                                        this.blockTick = 0;
+                                    }
+                                }
+                                this.isBlocking = true;
+                                this.fakeBlockState = true;
+                            } else {
+                                this.restoreSwappedSlot();
+                                Myau.blinkManager.setBlinkState(false, BlinkModules.AUTO_BLOCK);
+                                this.isBlocking = false;
+                                this.fakeBlockState = false;
+                                this.postBlock = false;
+                            }
+                            break;
                     }
                 }
                 boolean attacked = false;
@@ -706,7 +837,7 @@ public class KillAura extends Module {
                 if (swap) {
                     if (attacked) {
                         this.interactAttack(event.getNewYaw(), event.getNewPitch());
-                    } else {
+                    } else if (!this.postBlock) {
                         this.sendUseItem();
                     }
                 }
@@ -937,14 +1068,19 @@ public class KillAura extends Module {
         this.hitRegistered = false;
         this.attackDelayMS = 0L;
         this.blockTick = 0;
+        this.swapped = false;
+        this.postBlock = false;
     }
 
     @Override
     public void onDisabled() {
         Myau.blinkManager.setBlinkState(false, BlinkModules.AUTO_BLOCK);
+        this.restoreSwappedSlot();
         this.blockingState = false;
         this.isBlocking = false;
         this.fakeBlockState = false;
+        this.postBlock = false;
+        this.blockTick = 0;
     }
 
     @Override
@@ -954,7 +1090,9 @@ public class KillAura extends Module {
                 || this.autoBlock.getValue() == 4
                 || this.autoBlock.getValue() == 5
                 || this.autoBlock.getValue() == 6
-                || this.autoBlock.getValue() == 7;
+                || this.autoBlock.getValue() == 7
+                || this.autoBlock.getValue() == 9
+                || this.autoBlock.getValue() == 10;
         if (!this.autoBlock.getName().equals(value)) {
             if (this.swingRange.getName().equals(value)) {
                 if (this.swingRange.getValue() < this.attackRange.getValue()) {
