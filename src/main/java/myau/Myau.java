@@ -62,6 +62,7 @@ public class Myau {
         EventManager.register(moduleManager);
         EventManager.register(commandManager);
         moduleManager.modules.put(AimAssist.class, new AimAssist());
+        moduleManager.modules.put(AutoL.class, new AutoL());
         moduleManager.modules.put(AntiAFK.class, new AntiAFK());
         moduleManager.modules.put(AntiDebuff.class, new AntiDebuff());
         moduleManager.modules.put(AntiFireball.class, new AntiFireball());

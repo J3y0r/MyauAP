@@ -97,6 +97,7 @@ public class ClickGui extends GuiScreen {
         playerModules.add(Myau.moduleManager.getModule(AntiDebuff.class));
 
         List<Module> miscModules = new ArrayList<>();
+        miscModules.add(Myau.moduleManager.getModule(AutoL.class));
         miscModules.add(Myau.moduleManager.getModule(Spammer.class));
         miscModules.add(Myau.moduleManager.getModule(BedNuker.class));
         miscModules.add(Myau.moduleManager.getModule(BedTracker.class));
