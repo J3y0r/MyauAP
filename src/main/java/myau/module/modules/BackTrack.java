@@ -3,78 +3,60 @@ package myau.module.modules;
 import myau.Myau;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
+import myau.events.AttackEvent;
+import myau.events.LoadWorldEvent;
 import myau.events.PacketEvent;
 import myau.events.Render3DEvent;
-import myau.events.UpdateEvent;
+import myau.events.TickEvent;
 import myau.module.Module;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.FloatProperty;
 import myau.property.properties.IntProperty;
 import myau.property.properties.ModeProperty;
-import myau.util.PacketUtil;
 import myau.util.TimerUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.Packet;
-import net.minecraft.network.play.client.C00PacketKeepAlive;
-import net.minecraft.network.play.client.C01PacketChatMessage;
-import net.minecraft.network.play.client.C02PacketUseEntity;
-import net.minecraft.network.play.client.C03PacketPlayer;
-import net.minecraft.network.play.client.C07PacketPlayerDigging;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.client.C09PacketHeldItemChange;
-import net.minecraft.network.play.client.C0APacketAnimation;
-import net.minecraft.network.play.client.C0BPacketEntityAction;
-import net.minecraft.network.play.client.C0CPacketInput;
-import net.minecraft.network.play.client.C0DPacketCloseWindow;
-import net.minecraft.network.play.client.C0EPacketClickWindow;
-import net.minecraft.network.play.client.C0FPacketConfirmTransaction;
-import net.minecraft.network.play.client.C10PacketCreativeInventoryAction;
-import net.minecraft.network.play.client.C11PacketEnchantItem;
-import net.minecraft.network.play.client.C12PacketUpdateSign;
-import net.minecraft.network.play.client.C13PacketPlayerAbilities;
-import net.minecraft.network.play.client.C14PacketTabComplete;
-import net.minecraft.network.play.client.C15PacketClientSettings;
-import net.minecraft.network.play.client.C16PacketClientStatus;
-import net.minecraft.network.play.client.C17PacketCustomPayload;
-import net.minecraft.network.play.client.C18PacketSpectate;
-import net.minecraft.network.play.client.C19PacketResourcePackStatus;
-import net.minecraft.network.play.server.S0FPacketSpawnMob;
-import net.minecraft.network.play.server.S12PacketEntityVelocity;
+import net.minecraft.network.ThreadQuickExitException;
+import net.minecraft.network.play.INetHandlerPlayClient;
+import net.minecraft.network.play.server.S08PacketPlayerPosLook;
+import net.minecraft.network.play.server.S13PacketDestroyEntities;
 import net.minecraft.network.play.server.S14PacketEntity;
 import net.minecraft.network.play.server.S18PacketEntityTeleport;
-import net.minecraft.network.play.server.S19PacketEntityHeadLook;
-import net.minecraft.network.play.server.S27PacketExplosion;
+import net.minecraft.network.play.server.S40PacketDisconnect;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.Color;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
+import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BackTrack extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
 
-    public final BooleanProperty legit = new BooleanProperty("legit", false);
-    public final BooleanProperty releaseOnHit = new BooleanProperty("release-on-hit", true, () -> this.legit.getValue());
-    public final IntProperty delay = new IntProperty("delay", 400, 0, 1000);
-    public final FloatProperty hitRange = new FloatProperty("range", 3.0f, 3.0f, 10.0f);
-    public final BooleanProperty onlyIfNeeded = new BooleanProperty("only-if-needed", true);
+    public final IntProperty latencyMin = new IntProperty("latency-min", 50, 10, 500);
+    public final IntProperty latencyMax = new IntProperty("latency-max", 100, 50, 1000);
+    public final FloatProperty distanceMin = new FloatProperty("distance-min", 0.0F, 0.0F, 6.0F);
+    public final FloatProperty distanceMax = new FloatProperty("distance-max", 4.0F, 0.5F, 6.0F);
     public final ModeProperty espMode = new ModeProperty("esp-mode", 1, new String[]{"NONE", "HITBOX", "HUD"});
+    public final ModeProperty releaseStyle = new ModeProperty("style", 0, new String[]{"PULSE", "SMOOTH"});
+    public final BooleanProperty smart = new BooleanProperty("smart", true);
 
-    private final Queue<Packet> incomingPackets = new LinkedList<>();
-    private final Queue<Packet> outgoingPackets = new LinkedList<>();
-    private final Map<Integer, Vec3> realPositions = new HashMap<>();
-    private final TimerUtil timer = new TimerUtil();
+    private final Queue<TimedPacket> packetQueue = new ConcurrentLinkedQueue<>();
+    private final List<Packet<?>> skipPackets = new ArrayList<>();
+    private final TimerUtil cycleTimer = new TimerUtil();
+    private final Random random = new Random();
 
-    private EntityLivingBase target;
-    private Vec3 lastRealPos;
+    private Vec3 realPosition;
+    private EntityPlayer target;
+    private int currentLatency;
 
     public BackTrack() {
         super("BackTrack", false);
@@ -82,190 +64,250 @@ public class BackTrack extends Module {
 
     @Override
     public void onEnabled() {
-        incomingPackets.clear();
-        outgoingPackets.clear();
-        realPositions.clear();
-        lastRealPos = null;
-        timer.reset();
+        resetState(false);
     }
 
     @Override
     public void onDisabled() {
         releaseAll();
-        incomingPackets.clear();
-        outgoingPackets.clear();
-        realPositions.clear();
-        lastRealPos = null;
+        resetState(false);
+    }
+
+    @EventTarget
+    public void onLoadWorld(LoadWorldEvent event) {
+        releaseAll();
+        resetState(false);
+    }
+
+    @EventTarget
+    public void onTick(TickEvent event) {
+        if (event.getType() != EventType.PRE || mc.thePlayer == null) {
+            return;
+        }
+
+        if (target == null || realPosition == null) {
+            return;
+        }
+
+        if (target.isDead || mc.theWorld == null || mc.theWorld.getEntityByID(target.getEntityId()) == null) {
+            releaseAll();
+            resetState(false);
+            return;
+        }
+
+        if (smart.getValue() && target.hurtTime <= 2) {
+            double currentDistance = mc.thePlayer.getDistanceToEntity(target);
+            double backtrackDistance = mc.thePlayer.getDistance(realPosition.xCoord, realPosition.yCoord, realPosition.zCoord);
+            if (currentDistance + 0.5D < backtrackDistance) {
+                releaseAll();
+                resetState(false);
+                return;
+            }
+        }
+
+        double distance = mc.thePlayer.getDistanceToEntity(target);
+        if (distance < distanceMin.getValue() || distance > distanceMax.getValue()) {
+            releaseAll();
+            resetState(false);
+            return;
+        }
+
+        if (releaseStyle.getValue() == 0) {
+            releasePulse();
+        } else {
+            releaseSmooth();
+        }
+
+        if (packetQueue.isEmpty() && target != null) {
+            realPosition = target.getPositionVector();
+        }
     }
 
     @EventTarget
     public void onPacket(PacketEvent event) {
-        if (!isEnabled() || mc.thePlayer == null || mc.theWorld == null)
-            return;
-
-        Module scaffold = Myau.moduleManager.getModule(Scaffold.class);
-        if (scaffold != null && scaffold.isEnabled()) {
-            releaseAll();
-            incomingPackets.clear();
-            outgoingPackets.clear();
+        if (event.getType() != EventType.RECEIVE) {
             return;
         }
 
-        if (event.getType() == EventType.RECEIVE) {
-            handleIncoming(event);
-        } else if (event.getType() == EventType.SEND) {
-            handleOutgoing(event);
+        if (mc.thePlayer == null || mc.theWorld == null || mc.thePlayer.ticksExisted < 20) {
+            packetQueue.clear();
+            return;
         }
-    }
 
-    private void handleIncoming(PacketEvent event) {
         Packet<?> packet = event.getPacket();
-
-        if (packet instanceof S14PacketEntity) {
-            S14PacketEntity p = (S14PacketEntity) packet;
-            Entity e = p.getEntity(mc.theWorld);
-            if (e == null) return;
-
-            int id = e.getEntityId();
-            Vec3 pos = realPositions.getOrDefault(id, new Vec3(0, 0, 0));
-
-            realPositions.put(
-                    id,
-                    pos.addVector(
-                            p.func_149062_c() / 32.0,
-                            p.func_149061_d() / 32.0,
-                            p.func_149064_e() / 32.0
-                    )
-            );
-        }
-
-        if (packet instanceof S18PacketEntityTeleport) {
-            S18PacketEntityTeleport p = (S18PacketEntityTeleport) packet;
-            realPositions.put(
-                    p.getEntityId(),
-                    new Vec3(p.getX() / 32.0, p.getY() / 32.0, p.getZ() / 32.0)
-            );
-        }
-
-        if (shouldQueue()) {
-            if (blockIncoming(packet)) {
-                incomingPackets.add(packet);
-                event.setCancelled(true);
-            }
-        } else {
-            releaseIncoming();
-        }
-    }
-
-    private void handleOutgoing(PacketEvent event) {
-        Packet<?> packet = event.getPacket();
-
-        if (!legit.getValue())
+        if (skipPackets.remove(packet)) {
             return;
-
-        if (shouldQueue()) {
-            if (blockOutgoing(packet)) {
-                outgoingPackets.add(packet);
-                event.setCancelled(true);
-            }
-        } else {
-            releaseOutgoing();
         }
-    }
 
-    @EventTarget
-    public void onUpdate(UpdateEvent event) {
-        if (!isEnabled() || mc.thePlayer == null) return;
-
-        EntityLivingBase newTarget = getClosestEntity();
-        if (newTarget != target) {
+        if (target == null || realPosition == null) {
             releaseAll();
-            lastRealPos = null;
-        }
-        target = newTarget;
-
-        if (target == null)
             return;
+        }
 
-        Vec3 real = realPositions.get(target.getEntityId());
-        if (real == null)
+        if (event.isCancelled()) {
             return;
-
-        double distReal = mc.thePlayer.getDistance(real.xCoord, real.yCoord, real.zCoord);
-        double distCurrent = mc.thePlayer.getDistanceToEntity(target);
-
-        if (mc.thePlayer.maxHurtTime > 0 && mc.thePlayer.hurtTime == mc.thePlayer.maxHurtTime) {
-            releaseAll();
         }
 
-        if (distReal > hitRange.getValue() || timer.hasTimeElapsed(delay.getValue())) {
+        if (packet instanceof S08PacketPlayerPosLook || packet instanceof S40PacketDisconnect) {
             releaseAll();
+            resetState(false);
+            return;
         }
 
-        if (onlyIfNeeded.getValue()) {
-            if (distCurrent <= distReal) {
-                releaseAll();
-            }
-
-            if (lastRealPos != null) {
-                double lastDist = mc.thePlayer.getDistance(
-                        lastRealPos.xCoord,
-                        lastRealPos.yCoord,
-                        lastRealPos.zCoord
-                );
-
-                if (distReal < lastDist) {
+        if (packet instanceof S13PacketDestroyEntities) {
+            S13PacketDestroyEntities destroy = (S13PacketDestroyEntities) packet;
+            for (int id : destroy.getEntityIDs()) {
+                if (id == target.getEntityId()) {
                     releaseAll();
+                    resetState(false);
+                    return;
                 }
             }
         }
 
-        if (legit.getValue() && releaseOnHit.getValue() && target.hurtTime == 1) {
-            releaseAll();
+        if (packet instanceof S14PacketEntity) {
+            S14PacketEntity entityPacket = (S14PacketEntity) packet;
+            Entity entity = entityPacket.getEntity(mc.theWorld);
+            if (entity == null || entity.getEntityId() != target.getEntityId() || packetQueue.size() >= 50) {
+                return;
+            }
+
+            realPosition = realPosition.addVector(
+                    entityPacket.func_149062_c() / 32.0D,
+                    entityPacket.func_149061_d() / 32.0D,
+                    entityPacket.func_149064_e() / 32.0D
+            );
+            queuePacket(packet, event);
+        } else if (packet instanceof S18PacketEntityTeleport) {
+            S18PacketEntityTeleport teleport = (S18PacketEntityTeleport) packet;
+            if (teleport.getEntityId() != target.getEntityId() || packetQueue.size() >= 50) {
+                return;
+            }
+
+            realPosition = new Vec3(teleport.getX() / 32.0D, teleport.getY() / 32.0D, teleport.getZ() / 32.0D);
+            queuePacket(packet, event);
+        }
+    }
+
+    @EventTarget
+    public void onAttack(AttackEvent event) {
+        Entity entity = event.getTarget();
+        if (!(entity instanceof EntityPlayer) || mc.thePlayer == null) {
+            return;
         }
 
-        lastRealPos = real;
+        EntityPlayer attacked = (EntityPlayer) entity;
+        if (target == null || attacked != target) {
+            realPosition = attacked.getPositionVector();
+        }
+        target = attacked;
+
+        double distance = mc.thePlayer.getDistanceToEntity(target);
+        if (distance < distanceMin.getValue() || distance > distanceMax.getValue()) {
+            return;
+        }
+
+        int min = latencyMin.getValue();
+        int max = Math.max(min, latencyMax.getValue());
+        currentLatency = min + random.nextInt(Math.max(1, max - min + 1));
+        cycleTimer.reset();
     }
 
     @EventTarget
     public void onRender3D(Render3DEvent event) {
-        if (espMode.getValue() == 0)
+        if (espMode.getValue() == 0 || target == null || realPosition == null || target.isDead || currentLatency == 0) {
             return;
+        }
 
-        if (target == null)
-            return;
-
-        Vec3 real = realPositions.get(target.getEntityId());
-        if (real == null)
-            return;
-
-        double x = real.xCoord - mc.getRenderManager().viewerPosX;
-        double y = real.yCoord - mc.getRenderManager().viewerPosY;
-        double z = real.zCoord - mc.getRenderManager().viewerPosZ;
+        double x = realPosition.xCoord - mc.getRenderManager().viewerPosX;
+        double y = realPosition.yCoord - mc.getRenderManager().viewerPosY;
+        double z = realPosition.zCoord - mc.getRenderManager().viewerPosZ;
 
         AxisAlignedBB box = new AxisAlignedBB(
-                x - target.width / 2,
+                x - target.width / 2.0D,
                 y,
-                z - target.width / 2,
-                x + target.width / 2,
+                z - target.width / 2.0D,
+                x + target.width / 2.0D,
                 y + target.height,
-                z + target.width / 2
+                z + target.width / 2.0D
         );
 
         GlStateManager.pushMatrix();
         GlStateManager.disableTexture2D();
         GlStateManager.disableDepth();
         GlStateManager.depthMask(false);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glLineWidth(2.0F);
 
         Color color = getEspColor();
-        GlStateManager.color(color.getRed() / 255.0F, color.getGreen() / 255.0F, color.getBlue() / 255.0F, 0.4F);
-
         RenderGlobal.drawOutlinedBoundingBox(box, color.getRed(), color.getGreen(), color.getBlue(), 153);
 
+        GL11.glLineWidth(1.0F);
+        GL11.glDisable(GL11.GL_BLEND);
         GlStateManager.depthMask(true);
         GlStateManager.enableDepth();
         GlStateManager.enableTexture2D();
         GlStateManager.popMatrix();
+    }
+
+    private void queuePacket(Packet<?> packet, PacketEvent event) {
+        packetQueue.add(new TimedPacket(packet, currentLatency));
+        event.setCancelled(true);
+    }
+
+    private void releasePulse() {
+        if (!cycleTimer.hasTimeElapsed(currentLatency)) {
+            return;
+        }
+
+        releaseAll();
+        cycleTimer.reset();
+    }
+
+    private void releaseSmooth() {
+        while (!packetQueue.isEmpty()) {
+            TimedPacket timedPacket = packetQueue.peek();
+            if (timedPacket == null || !timedPacket.timer.hasTimeElapsed(timedPacket.latency)) {
+                break;
+            }
+
+            packetQueue.poll();
+            receivePacket(timedPacket.packet);
+        }
+    }
+
+    private void releaseAll() {
+        while (!packetQueue.isEmpty()) {
+            TimedPacket timedPacket = packetQueue.poll();
+            if (timedPacket != null) {
+                receivePacket(timedPacket.packet);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void receivePacket(Packet<?> packet) {
+        if (packet == null || mc.getNetHandler() == null) {
+            return;
+        }
+
+        try {
+            skipPackets.add(packet);
+            ((Packet<INetHandlerPlayClient>) packet).processPacket(mc.getNetHandler());
+        } catch (ThreadQuickExitException ignored) {
+        }
+    }
+
+    private void resetState(boolean keepSkippedPackets) {
+        packetQueue.clear();
+        if (!keepSkippedPackets) {
+            skipPackets.clear();
+        }
+        realPosition = null;
+        target = null;
+        currentLatency = 0;
+        cycleTimer.reset();
     }
 
     private Color getEspColor() {
@@ -276,117 +318,20 @@ public class BackTrack extends Module {
         return Color.RED;
     }
 
-    private boolean shouldQueue() {
-        if (target == null)
-            return false;
-
-        Vec3 real = realPositions.get(target.getEntityId());
-        if (real == null)
-            return false;
-
-        if (!onlyIfNeeded.getValue()) {
-            double distReal = mc.thePlayer.getDistance(
-                    real.xCoord, real.yCoord, real.zCoord);
-            double distCurrent = mc.thePlayer.getDistanceToEntity(target);
-
-            return distReal + 0.15 < distCurrent
-                    && !timer.hasTimeElapsed(delay.getValue());
-        }
-
-        double distReal = mc.thePlayer.getDistance(
-                real.xCoord, real.yCoord, real.zCoord
-        );
-        double distCurrent = mc.thePlayer.getDistanceToEntity(target);
-
-        return distReal < distCurrent;
-    }
-
-    private void releaseIncoming() {
-        if (mc.getNetHandler() == null)
-            return;
-
-        while (!incomingPackets.isEmpty()) {
-            incomingPackets.poll().processPacket(mc.getNetHandler());
-        }
-        timer.reset();
-    }
-
-    private void releaseOutgoing() {
-        while (!outgoingPackets.isEmpty()) {
-            PacketUtil.sendPacketNoEvent(outgoingPackets.poll());
-        }
-        timer.reset();
-    }
-
-    private void releaseAll() {
-        releaseIncoming();
-        releaseOutgoing();
-    }
-
-    private boolean blockIncoming(Packet<?> p) {
-        if (!onlyIfNeeded.getValue()) {
-            if (p instanceof S12PacketEntityVelocity
-                    || p instanceof S27PacketExplosion) {
-                return false;
-            }
-
-            return p instanceof S14PacketEntity
-                    || p instanceof S18PacketEntityTeleport
-                    || p instanceof S19PacketEntityHeadLook
-                    || p instanceof S0FPacketSpawnMob;
-        }
-
-        return p instanceof S12PacketEntityVelocity
-                || p instanceof S27PacketExplosion
-                || p instanceof S14PacketEntity
-                || p instanceof S18PacketEntityTeleport
-                || p instanceof S19PacketEntityHeadLook
-                || p instanceof S0FPacketSpawnMob;
-    }
-
-    private boolean blockOutgoing(Packet<?> p) {
-        return p instanceof C03PacketPlayer
-                || p instanceof C02PacketUseEntity
-                || p instanceof C0APacketAnimation
-                || p instanceof C0BPacketEntityAction
-                || p instanceof C08PacketPlayerBlockPlacement
-                || p instanceof C07PacketPlayerDigging
-                || p instanceof C09PacketHeldItemChange
-                || p instanceof C00PacketKeepAlive
-                || p instanceof C0CPacketInput
-                || p instanceof C0DPacketCloseWindow
-                || p instanceof C0EPacketClickWindow
-                || p instanceof C0FPacketConfirmTransaction
-                || p instanceof C10PacketCreativeInventoryAction
-                || p instanceof C11PacketEnchantItem
-                || p instanceof C12PacketUpdateSign
-                || p instanceof C13PacketPlayerAbilities
-                || p instanceof C14PacketTabComplete
-                || p instanceof C15PacketClientSettings
-                || p instanceof C16PacketClientStatus
-                || p instanceof C17PacketCustomPayload
-                || p instanceof C18PacketSpectate
-                || p instanceof C19PacketResourcePackStatus
-                || p instanceof C01PacketChatMessage;
-    }
-
-    private EntityLivingBase getClosestEntity() {
-        EntityLivingBase closest = null;
-        double closestDist = Double.MAX_VALUE;
-        for (Entity entity : mc.theWorld.loadedEntityList) {
-            if (entity instanceof EntityLivingBase && entity != mc.thePlayer) {
-                double dist = mc.thePlayer.getDistanceToEntity(entity);
-                if (dist < closestDist && dist <= hitRange.getValue()) {
-                    closestDist = dist;
-                    closest = (EntityLivingBase) entity;
-                }
-            }
-        }
-        return closest;
-    }
-
     @Override
     public String[] getSuffix() {
-        return new String[]{String.format("%dms", this.delay.getValue())};
+        return new String[]{String.format("%d-%dms", latencyMin.getValue(), latencyMax.getValue())};
+    }
+
+    private static class TimedPacket {
+        private final Packet<?> packet;
+        private final TimerUtil timer;
+        private final int latency;
+
+        TimedPacket(Packet<?> packet, int latency) {
+            this.packet = packet;
+            this.timer = new TimerUtil();
+            this.latency = Math.max(latency, 1);
+        }
     }
 }
