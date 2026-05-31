@@ -64,7 +64,7 @@ public class KillAura extends Module {
     private boolean swapped = false;
     private boolean postBlock = false;
     private long attackDelayMS = 0L;
-    private int blockTick = 0;
+    int blockTick = 0;
     private int lastTickProcessed;
     public final ModeProperty mode;
     public final ModeProperty sort;
