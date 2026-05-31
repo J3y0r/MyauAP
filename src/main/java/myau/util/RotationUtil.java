@@ -4,6 +4,8 @@ import myau.mixin.IAccessorEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
@@ -192,5 +194,32 @@ public class RotationUtil {
         Vec3 lookVec = ((IAccessorEntity) RotationUtil.mc.thePlayer).callGetVectorForRotation(pitch, yaw);
         Vec3 targetPos = eyePos.addVector(lookVec.xCoord * distance, lookVec.yCoord * distance, lookVec.zCoord * distance);
         return boundingBox.calculateIntercept(eyePos, targetPos);
+    }
+
+    public static Vec3 getBlockFaceCenter(BlockPos pos, EnumFacing face) {
+        double x = pos.getX() + 0.5D + (double) face.getFrontOffsetX() * 0.5D;
+        double y = pos.getY() + 0.5D + (double) face.getFrontOffsetY() * 0.5D;
+        double z = pos.getZ() + 0.5D + (double) face.getFrontOffsetZ() * 0.5D;
+        return new Vec3(x, y, z);
+    }
+
+    public static float[] getRotationsToVec(Vec3 target) {
+        double relX = target.xCoord - RotationUtil.mc.thePlayer.posX;
+        double relY = target.yCoord - (RotationUtil.mc.thePlayer.posY + (double) RotationUtil.mc.thePlayer.getEyeHeight());
+        double relZ = target.zCoord - RotationUtil.mc.thePlayer.posZ;
+        double horizontalDistance = Math.sqrt(relX * relX + relZ * relZ);
+        float yaw = (float) (Math.atan2(relZ, relX) * 180.0 / Math.PI) - 90.0F;
+        float pitch = (float) (-(Math.atan2(relY, horizontalDistance) * 180.0 / Math.PI));
+        return new float[]{yaw, pitch};
+    }
+
+    public static float[] getRotationsFromTo(double fromX, double fromY, double fromZ, double toX, double toY, double toZ) {
+        double relX = toX - fromX;
+        double relY = toY - fromY;
+        double relZ = toZ - fromZ;
+        double horizontalDistance = Math.sqrt(relX * relX + relZ * relZ);
+        float yaw = (float) (Math.atan2(relZ, relX) * 180.0 / Math.PI) - 90.0F;
+        float pitch = (float) (-(Math.atan2(relY, horizontalDistance) * 180.0 / Math.PI));
+        return new float[]{yaw, pitch};
     }
 }
