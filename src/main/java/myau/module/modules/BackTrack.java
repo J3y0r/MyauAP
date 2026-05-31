@@ -81,7 +81,7 @@ public class BackTrack extends Module {
 
     @EventTarget
     public void onTick(TickEvent event) {
-        if (event.getType() != EventType.PRE || mc.thePlayer == null) {
+        if (!isEnabled() || event.getType() != EventType.PRE || mc.thePlayer == null) {
             return;
         }
 
@@ -125,7 +125,7 @@ public class BackTrack extends Module {
 
     @EventTarget
     public void onPacket(PacketEvent event) {
-        if (event.getType() != EventType.RECEIVE) {
+        if (!isEnabled() || event.getType() != EventType.RECEIVE) {
             return;
         }
 
@@ -191,6 +191,10 @@ public class BackTrack extends Module {
 
     @EventTarget
     public void onAttack(AttackEvent event) {
+        if (!isEnabled()) {
+            return;
+        }
+
         Entity entity = event.getTarget();
         if (!(entity instanceof EntityPlayer) || mc.thePlayer == null) {
             return;
@@ -215,7 +219,7 @@ public class BackTrack extends Module {
 
     @EventTarget
     public void onRender3D(Render3DEvent event) {
-        if (espMode.getValue() == 0 || target == null || realPosition == null || target.isDead || currentLatency == 0) {
+        if (!isEnabled() || espMode.getValue() == 0 || target == null || realPosition == null || target.isDead || currentLatency == 0) {
             return;
         }
 
