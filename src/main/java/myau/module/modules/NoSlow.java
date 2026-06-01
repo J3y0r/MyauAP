@@ -41,12 +41,12 @@ public class NoSlow extends Module {
     private int delay;
     private boolean post;
     private final Random random = new Random();
-    public final ModeProperty swordMode = new ModeProperty("sword-mode", 1, new String[]{"NONE", "VANILLA", "PREDICTION-SEMI", "GRIM", "PREDICTION"});
-    public final IntProperty cancelTick = new IntProperty("cancel-tick", 1, 0, 2, () -> swordMode.getValue() == 2);
-    public final IntProperty cancelTick2 = new IntProperty("cancel-tick2", 1, 0, 2, () -> swordMode.getValue() == 2);
-    public final IntProperty swapDelay = new IntProperty("SwapDelay", 0, 0, 3, () -> swordMode.getValue() == 4);
-    public final BooleanProperty blink = new BooleanProperty("Blink", false, () -> swordMode.getValue() == 4);
-    public final BooleanProperty c17 = new BooleanProperty("C17Packet", false, () -> swordMode.getValue() == 4);
+    public final ModeProperty swordMode = new ModeProperty("sword-mode", 1, new String[]{"NONE", "VANILLA", "PREDICTION", "PREDICTION-SEMI", "GRIM"});
+    public final IntProperty cancelTick = new IntProperty("cancel-tick", 1, 0, 2, () -> swordMode.getValue() == 3);
+    public final IntProperty cancelTick2 = new IntProperty("cancel-tick2", 1, 0, 2, () -> swordMode.getValue() == 3);
+    public final IntProperty swapDelay = new IntProperty("SwapDelay", 0, 0, 3, () -> swordMode.getValue() == 2);
+    public final BooleanProperty blink = new BooleanProperty("Blink", false, () -> swordMode.getValue() == 2);
+    public final BooleanProperty c17 = new BooleanProperty("C17Packet", false, () -> swordMode.getValue() == 2);
     public final PercentProperty swordMotion = new PercentProperty("sword-motion", 100, () -> this.swordMode.getValue() == 1);
     public final BooleanProperty swordSprint = new BooleanProperty("sword-sprint", true, () -> this.swordMode.getValue() != 0);
     public final BooleanProperty killauraonly = new BooleanProperty("killaura-only", false, () -> this.swordMode.getValue() != 0);
@@ -84,18 +84,18 @@ public class NoSlow extends Module {
     }
 
     public boolean isGrimMode() {
-        return this.swordMode.getValue() == 3 && ItemUtil.isHoldingSword()
+        return this.swordMode.getValue() == 4 && ItemUtil.isHoldingSword()
                 || this.foodMode.getValue() == 3 && ItemUtil.isEating()
                 || this.bowMode.getValue() == 3 && ItemUtil.isUsingBow();
     }
 
     public boolean isAnyActive() {
-        if (swordMode.getValue() == 2 && isSwordActive()) {
+        if (swordMode.getValue() == 3 && isSwordActive()) {
             KillAura killAura = (KillAura) Myau.moduleManager.modules.get(KillAura.class);
             return killAura.isEnabled() && killAura.shouldAutoBlock()
                     && (killAura.blockTick == cancelTick.getValue() || killAura.blockTick == cancelTick2.getValue());
         }
-        if (swordMode.getValue() == 4 && isSwordActive()) {
+        if (swordMode.getValue() == 2 && isSwordActive()) {
             return delay == 0;
         }
         return mc.thePlayer.isUsingItem() && (this.isSwordActive() || this.isFoodActive() || this.isBowActive());
@@ -110,7 +110,7 @@ public class NoSlow extends Module {
     public int getMotionMultiplier() {
         count++;
         if (ItemUtil.isHoldingSword()) {
-            if (swordMode.getValue() == 3) {
+            if (swordMode.getValue() == 4) {
                 return count % 2 == 0 ? 100 : 20;
             }
             return this.swordMotion.getValue();
@@ -134,7 +134,7 @@ public class NoSlow extends Module {
         if (event.getType() != EventType.PRE) return;
 
         if (ItemUtil.isHoldingSword() && mc.thePlayer.isUsingItem() && isSwordActive()) {
-            if (swordMode.getValue() == 4) {
+            if (swordMode.getValue() == 2) {
                 delay--;
                 if (delay < 0) {
                     int randomSlot = random.nextInt(9);
@@ -179,7 +179,7 @@ public class NoSlow extends Module {
 
         if (!ItemUtil.isHoldingSword() || !mc.thePlayer.isUsingItem()) return;
         if (!isSwordActive()) return;
-        if (swordMode.getValue() != 4) return;
+        if (swordMode.getValue() != 2) return;
 
         if (post) {
             post = false;
