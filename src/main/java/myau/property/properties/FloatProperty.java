@@ -1,5 +1,6 @@
 package myau.property.properties;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import myau.property.Property;
 
@@ -36,12 +37,16 @@ public class FloatProperty extends Property<Float> {
 
     @Override
     public boolean read(JsonObject jsonObject) {
-        return this.setValue(jsonObject.get(this.getName()).getAsNumber().floatValue());
+        JsonElement element = jsonObject.get(this.getName());
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            return this.setValue(Float.parseFloat(element.getAsString()));
+        }
+        return this.setValue(element.getAsNumber().floatValue());
     }
 
     @Override
     public void write(JsonObject jsonObject) {
-        jsonObject.addProperty(this.getName(), this.getValue());
+        jsonObject.addProperty(this.getName(), Float.toString(this.getValue()));
     }
 
     public Float getMinimum() {

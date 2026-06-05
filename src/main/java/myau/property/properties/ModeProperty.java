@@ -1,5 +1,6 @@
 package myau.property.properties;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import myau.property.Property;
 
@@ -46,7 +47,15 @@ public class ModeProperty extends Property<Integer> {
 
     @Override
     public boolean read(JsonObject jsonObject) {
-        return this.parseString(jsonObject.get(this.getName()).getAsString());
+        JsonElement element = jsonObject.get(this.getName());
+        if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+            int index = element.getAsNumber().intValue();
+            if (index >= 0 && index < this.modes.length) {
+                return this.setValue(index);
+            }
+            return false;
+        }
+        return this.parseString(element.getAsString());
     }
 
     @Override

@@ -22,4 +22,8 @@ public abstract class Slider {
     public abstract boolean isVisible();
 
     public abstract void stepping(boolean increment);
+
+    public int getPrecision() {
+        return 0;
+    }
 }

@@ -28,7 +28,10 @@ public class FloatSlider extends Slider {
 
     @Override
     public void setValue(double value) {
-        property.setValue(new Double(value).floatValue());
+        int precision = detectPrecision();
+        double scale = Math.pow(10, precision);
+        double rounded = Math.round(value * scale) / scale;
+        property.setValue((float) rounded);
     }
 
     @Override
@@ -65,13 +68,43 @@ public class FloatSlider extends Slider {
     }
 
     @Override
+    public int getPrecision() {
+        return detectPrecision();
+    }
+
+    private int detectPrecision() {
+        float rangeDiff = property.getMaximum() - property.getMinimum();
+        int rangePrecision = rangeDiff > 0 ? getDecimalPlaces(rangeDiff) : getDecimalPlaces(property.getMinimum());
+        int valuePrecision = getDecimalPlaces(property.getValue());
+        return Math.max(1, Math.max(rangePrecision, valuePrecision));
+    }
+
+    private static int getDecimalPlaces(float value) {
+        if (Float.isInfinite(value) || Float.isNaN(value)) return 0;
+        float positive = Math.abs(value);
+        float remainder = positive;
+        for (int i = 0; i < 6; i++) {
+            long rounded = Math.round(remainder);
+            remainder = (float) (remainder * 10) - rounded * 10;
+            if (Math.abs(remainder) < 0.001f) {
+                return i == 0 ? 0 : i;
+            }
+        }
+        return 1;
+    }
+
+    @Override
     public void stepping(boolean increment) {
+        int precision = detectPrecision();
+        double scale = Math.pow(10, precision);
         if (increment) {
             if (property.getValue() >= property.getMaximum()) return;
-            property.setValue(Math.round(property.getValue() * 10 + 1) / 10.0F);
+            double stepped = Math.round(property.getValue() * scale + 1) / scale;
+            property.setValue((float) Math.min(stepped, property.getMaximum()));
         } else {
             if (property.getValue() <= property.getMinimum()) return;
-            property.setValue(Math.round(property.getValue() * 10 - 1) / 10.0F);
+            double stepped = Math.round(property.getValue() * scale - 1) / scale;
+            property.setValue((float) Math.max(stepped, property.getMinimum()));
         }
     }
 }

@@ -56,7 +56,7 @@ public class Myau {
         propertyManager = new PropertyManager();
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
-        EventManager.register(authManager);
+        // EventManager.register(authManager);
         EventManager.register(rotationManager);
         EventManager.register(floatManager);
         EventManager.register(blinkManager);

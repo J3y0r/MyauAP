@@ -77,7 +77,7 @@ public class SliderComponent implements Component {
                 if (increment > 0) {
                     rawValue = Math.round(rawValue / increment) * increment;
                 }
-                double n = roundToPrecision(rawValue, 2);
+                double n = roundToPrecision(rawValue, this.slider.getPrecision());
                 n = Math.max(this.slider.getMin(), Math.min(this.slider.getMax(), n));
                 this.slider.setValue(n);
             }
