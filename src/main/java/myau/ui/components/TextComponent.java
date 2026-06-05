@@ -1,8 +1,6 @@
-
 package myau.ui.components;
 
 import myau.enums.ChatColors;
-import myau.property.properties.BooleanProperty;
 import myau.property.properties.TextProperty;
 import myau.ui.ClickGui;
 import myau.ui.Component;
@@ -11,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 public class TextComponent implements Component {
     private final TextProperty property;

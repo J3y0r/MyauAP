@@ -3,9 +3,9 @@ package myau.command.commands;
 import myau.Myau;
 import myau.command.Command;
 import myau.module.Module;
-import myau.util.ChatUtil;
 import myau.property.Property;
 import myau.property.properties.BooleanProperty;
+import myau.util.ChatUtil;
 
 import java.util.ArrayList;
 import java.util.List;

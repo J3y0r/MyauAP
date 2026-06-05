@@ -4,11 +4,11 @@ import myau.enums.ChatColors;
 import myau.event.EventTarget;
 import myau.events.Render2DEvent;
 import myau.module.Module;
+import myau.property.properties.BooleanProperty;
+import myau.property.properties.FloatProperty;
 import myau.util.RenderUtil;
 import myau.util.RotationUtil;
 import myau.util.TeamUtil;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.FloatProperty;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -50,8 +50,7 @@ public class Indicators extends Module {
         if (this.pearls.getValue() && entity instanceof EntityEnderPearl) return true;
         if (this.arrows.getValue() && entity instanceof EntityArrow) return true;
         if (this.egg.getValue() && entity instanceof EntityEgg) return true;
-        if (this.snowball.getValue() && entity instanceof EntitySnowball) return true;
-        return false;
+        return this.snowball.getValue() && entity instanceof EntitySnowball;
     }
 
     private Item getIndicatorItem(Entity entity) {

@@ -1,4 +1,3 @@
-
 package myau.ui.components;
 
 import myau.enums.ChatColors;

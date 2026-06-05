@@ -61,7 +61,7 @@ public class Velocity extends Module {
     private boolean handleReset = false;
     private boolean shouldJump = false;
     private int jumpCooldown = 0;
-    private int rotatoTickCounter = 0;
+    private int rotateTickCounter = 0;
     private int ticksSinceVelocity = -1;
     private int reduceTick = -1;
     private double knockbackX = 0.0;
@@ -114,7 +114,7 @@ public class Velocity extends Module {
     private void resetPrediction() {
         this.delayFlag = false;
         this.handleReset = false;
-        this.rotatoTickCounter = 0;
+        this.rotateTickCounter = 0;
         this.ticksSinceVelocity = -1;
         this.reduceTick = -1;
         this.knockbackX = 0.0;
@@ -155,7 +155,7 @@ public class Velocity extends Module {
                 this.knockbackX = event.getX();
                 this.knockbackZ = event.getZ();
                 if (Math.abs(this.knockbackX) > 0.01 || Math.abs(this.knockbackZ) > 0.01) {
-                    this.rotatoTickCounter = 1;
+                    this.rotateTickCounter = 1;
                 }
             }
             if (this.mode.getValue() == 1 && !this.delay.getValue()) {
@@ -202,8 +202,8 @@ public class Velocity extends Module {
     @EventTarget
     public void onUpdate(UpdateEvent event) {
         if (event.getType() == EventType.PRE) {
-            if (this.isEnabled() && this.mode.getValue() == 1 && this.rotatoTickCounter > 0 && this.rotatoTickCounter <= this.rotateTick.getValue()) {
-                if (this.rotatoTickCounter == 1) {
+            if (this.isEnabled() && this.mode.getValue() == 1 && this.rotateTickCounter > 0 && this.rotateTickCounter <= this.rotateTick.getValue()) {
+                if (this.rotateTickCounter == 1) {
                     this.targetRotation = RotationUtil.getRotationsTo(-this.knockbackX, 0.0, -this.knockbackZ, event.getYaw(), event.getPitch());
                 }
                 if (this.targetRotation != null) {
@@ -257,10 +257,10 @@ public class Velocity extends Module {
             MoveUtil.setSpeed(MoveUtil.getSpeed(), MoveUtil.getMoveYaw());
             this.delayActive = false;
         }
-        if (this.mode.getValue() == 1 && this.rotatoTickCounter > 0 && this.rotatoTickCounter <= this.rotateTick.getValue()) {
-            this.rotatoTickCounter++;
-            if (this.rotatoTickCounter > this.rotateTick.getValue()) {
-                this.rotatoTickCounter = 0;
+        if (this.mode.getValue() == 1 && this.rotateTickCounter > 0 && this.rotateTickCounter <= this.rotateTick.getValue()) {
+            this.rotateTickCounter++;
+            if (this.rotateTickCounter > this.rotateTick.getValue()) {
+                this.rotateTickCounter = 0;
                 this.targetRotation = null;
                 this.knockbackX = 0.0;
                 this.knockbackZ = 0.0;
@@ -317,7 +317,7 @@ public class Velocity extends Module {
         if (this.handleReset) {
             mc.thePlayer.movementInput.moveForward = 1.0F;
         }
-        if (this.mode.getValue() == 1 && this.rotatoTickCounter > 0 && this.rotatoTickCounter <= this.rotateTick.getValue()) {
+        if (this.mode.getValue() == 1 && this.rotateTickCounter > 0 && this.rotateTickCounter <= this.rotateTick.getValue()) {
             if (this.autoMove.getValue()) {
                 mc.thePlayer.movementInput.moveForward = 1.0F;
             }

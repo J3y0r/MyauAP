@@ -18,13 +18,13 @@ import net.minecraft.util.Vec3;
 
 public class HitSelect extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    
+
     public final ModeProperty mode = new ModeProperty("mode", 0, new String[]{"SECOND", "CRITICALS", "W_TAP"});
-    
+
     private boolean sprintState = false;
     private boolean set = false;
     private double savedSlowdown = 0.0;
-    
+
     private int blockedHits = 0;
     private int allowedHits = 0;
 
@@ -37,7 +37,7 @@ public class HitSelect extends Module {
         if (!this.isEnabled()) {
             return;
         }
-        
+
         if (event.getType() == EventType.POST) {
             this.resetMotion();
         }
@@ -64,7 +64,7 @@ public class HitSelect extends Module {
 
         if (event.getPacket() instanceof C02PacketUseEntity) {
             C02PacketUseEntity use = (C02PacketUseEntity) event.getPacket();
-            
+
             if (use.getAction() != C02PacketUseEntity.Action.ATTACK) {
                 return;
             }
@@ -188,13 +188,13 @@ public class HitSelect extends Module {
         try {
             // Save the current slowdown value
             this.savedSlowdown = keepSprint.slowdown.getValue().doubleValue();
-            
+
             // Enable KeepSprint and set slowdown to 0
             if (!keepSprint.isEnabled()) {
                 keepSprint.toggle();
             }
             keepSprint.slowdown.setValue(0);
-            
+
             this.set = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -214,7 +214,7 @@ public class HitSelect extends Module {
         try {
             // Restore the original slowdown value
             keepSprint.slowdown.setValue((int) this.savedSlowdown);
-            
+
             // Disable KeepSprint if we enabled it
             if (keepSprint.isEnabled()) {
                 keepSprint.toggle();

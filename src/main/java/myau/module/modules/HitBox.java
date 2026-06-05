@@ -9,12 +9,12 @@ import myau.events.Render3DEvent;
 import myau.events.TickEvent;
 import myau.mixin.IAccessorRenderManager;
 import myau.module.Module;
-import myau.util.RenderUtil;
-import myau.util.TeamUtil;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.ColorProperty;
 import myau.property.properties.FloatProperty;
 import myau.property.properties.ModeProperty;
+import myau.util.RenderUtil;
+import myau.util.TeamUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -145,10 +145,7 @@ public class HitBox extends Module {
                     if (this.teams.getValue() && TeamUtil.isSameTeam(player)) {
                         return false;
                     }
-                    if (this.botCheck.getValue() && TeamUtil.isBot(player)) {
-                        return false;
-                    }
-                    return true;
+                    return !this.botCheck.getValue() || !TeamUtil.isBot(player);
                 }
                 return false;
             case 2:
@@ -174,9 +171,7 @@ public class HitBox extends Module {
                     if (this.teams.getValue() && TeamUtil.isSameTeam(player)) {
                         return false;
                     }
-                    if (this.botCheck.getValue() && TeamUtil.isBot(player)) {
-                        return false;
-                    }
+                    return !this.botCheck.getValue() || !TeamUtil.isBot(player);
                 }
                 return true;
             default:

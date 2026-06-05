@@ -331,7 +331,7 @@ public class BedNuker extends Module {
     public void onTick(TickEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
             AutoBlockIn autoBlockIn = (AutoBlockIn) Myau.moduleManager.modules.get(AutoBlockIn.class);
-            if(autoBlockIn.isEnabled()) return;
+            if (autoBlockIn.isEnabled()) return;
             if (this.targetBed != null) {
                 if (mc.theWorld.isAirBlock(this.targetBed) || !PlayerUtil.canReach(this.targetBed, this.range.getValue().doubleValue())) {
                     this.restoreSlot();
@@ -435,7 +435,7 @@ public class BedNuker extends Module {
     public void onUpdate(UpdateEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
             AutoBlockIn autoBlockIn = (AutoBlockIn) Myau.moduleManager.modules.get(AutoBlockIn.class);
-            if(autoBlockIn.isEnabled()) return;
+            if (autoBlockIn.isEnabled()) return;
             if (this.isReady()) {
                 double x = (double) this.targetBed.getX() + 0.5 - mc.thePlayer.posX;
                 double y = (double) this.targetBed.getY() + 0.5 - mc.thePlayer.posY - (double) mc.thePlayer.getEyeHeight();

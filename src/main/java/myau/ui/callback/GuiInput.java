@@ -15,7 +15,7 @@ public class GuiInput extends GuiScreen {
     private final Consumer<String> callback;
     private GuiTextField textField;
     private GuiButton buttonOk;
-    private GuiScreen caller;
+    private final GuiScreen caller;
 
     public GuiInput(String title, String defaultValue, Consumer<String> callback, GuiScreen caller) {
         this.title = title;
@@ -25,7 +25,7 @@ public class GuiInput extends GuiScreen {
     }
 
     public static void prompt(String title, String defaultValue, Consumer<String> callback, GuiScreen caller) {
-        Minecraft.getMinecraft().displayGuiScreen(new GuiInput(title,defaultValue, callback, caller));
+        Minecraft.getMinecraft().displayGuiScreen(new GuiInput(title, defaultValue, callback, caller));
     }
 
     @Override
@@ -62,7 +62,7 @@ public class GuiInput extends GuiScreen {
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         try {
-            super.mouseClicked(mouseX,mouseY,mouseButton);
+            super.mouseClicked(mouseX, mouseY, mouseButton);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

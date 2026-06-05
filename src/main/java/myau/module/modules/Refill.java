@@ -18,7 +18,7 @@ import net.minecraft.item.ItemStack;
 public class Refill extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     public final IntProperty delay = new IntProperty("delay", 1, 0, 20);
-    public final ModeProperty mode = new ModeProperty("mode", 1, new String[]{"SOUP","POT"});
+    public final ModeProperty mode = new ModeProperty("mode", 1, new String[]{"SOUP", "POT"});
     private final TimerUtil time = new TimerUtil();
 
     public Refill() {
@@ -38,7 +38,7 @@ public class Refill extends Module {
 
     private void refill(Item targetItem) {
         if (mc.currentScreen instanceof GuiInventory) {
-            if (!isHotbarFull() && this.time.hasTimeElapsed(delay.getValue() * 50)) {
+            if (!isHotbarFull() && this.time.hasTimeElapsed(delay.getValue() * 50L)) {
                 for (int i = 9; i < 36; ++i) {
                     ItemStack itemstack = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
                     if (itemstack != null && itemstack.getItem() == targetItem) {

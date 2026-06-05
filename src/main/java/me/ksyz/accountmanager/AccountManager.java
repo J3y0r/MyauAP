@@ -27,7 +27,7 @@ public class AccountManager {
 
     public static void init() {
         SSLContext ignored = SSLUtils.getSSLContext();
-        Nan0EventRegister.register(MinecraftForge.EVENT_BUS,new Events());
+        Nan0EventRegister.register(MinecraftForge.EVENT_BUS, new Events());
 
         if (!file.exists()) {
             try {

@@ -29,6 +29,7 @@ public abstract class MixinPlayerControllerMP {
         AttackEvent event = new AttackEvent(targetEntity);
         EventManager.call(event);
     }
+
     @Inject(
             method = {"windowClick"},
             at = {@At("HEAD")},

@@ -46,7 +46,7 @@ public class BlinkManager {
             this.blinkModule = module;
             this.blinking = true;
         } else {
-            if(blinkModule != module){
+            if (blinkModule != module) {
                 return false;
             }
             this.blinking = false;

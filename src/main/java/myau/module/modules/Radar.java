@@ -34,6 +34,7 @@ public class Radar extends Module {
     public final ColorProperty fillColor = new ColorProperty("fill-color", Color.GRAY.getRGB());
     public final ColorProperty outlineColor = new ColorProperty("outline-color", Color.DARK_GRAY.getRGB());
     public final ColorProperty crossColor = new ColorProperty("cross-color", Color.LIGHT_GRAY.getRGB());
+
     public Radar() {
         super("Radar", false);
     }
@@ -101,15 +102,15 @@ public class Radar extends Module {
 
         RenderUtil.enableRenderState();
 
-        float yaw = (float)Math.toRadians(mc.thePlayer.rotationYaw);
+        float yaw = (float) Math.toRadians(mc.thePlayer.rotationYaw);
         if (mc.gameSettings.thirdPersonView != 2) {
-            yaw += (float)Math.toRadians(180.0F);
+            yaw += (float) Math.toRadians(180.0F);
         }
         double cos = Math.cos(yaw);
         double sin = Math.sin(yaw);
 
         Color fill = new Color(fillColor.getValue());
-        this.drawRadarCircle(0.0, 0, yaw, radarRadius.getValue(), 64, new Color(fill.getRed(),fill.getGreen(),fill.getBlue(),100).getRGB(), outlineColor.getValue(), crossColor.getValue());
+        this.drawRadarCircle(0.0, 0, yaw, radarRadius.getValue(), 64, new Color(fill.getRed(), fill.getGreen(), fill.getBlue(), 100).getRGB(), outlineColor.getValue(), crossColor.getValue());
         for (EntityPlayer player : TeamUtil.getLoadedEntitiesSorted().stream().filter(entity -> entity instanceof EntityPlayer && this.shouldRender((EntityPlayer) entity)).map(EntityPlayer.class::cast).collect(Collectors.toList())) {
             double dx = (player.lastTickPosX + (player.posX - player.lastTickPosX) * event.getPartialTicks()) - mc.thePlayer.posX;
             double dz = (player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * event.getPartialTicks()) - mc.thePlayer.posZ;
@@ -126,8 +127,8 @@ public class Radar extends Module {
 
         }
         if (this.showPVP.getValue()) {
-            double dx = - mc.thePlayer.posX;
-            double dz = - mc.thePlayer.posZ;
+            double dx = -mc.thePlayer.posX;
+            double dz = -mc.thePlayer.posZ;
 
             double relX = dx * cos + dz * sin;
             double relY = dz * cos - dx * sin;
@@ -153,10 +154,10 @@ public class Radar extends Module {
     }
 
     public void drawRadarCircle(double x, double y, double angle, double radius,
-                                       int segments,
-                                       int fillColor,
-                                       int outlineColor,
-                                       int crossColor) {
+                                int segments,
+                                int fillColor,
+                                int outlineColor,
+                                int crossColor) {
 
         GlStateManager.enableBlend();
         GlStateManager.disableTexture2D();

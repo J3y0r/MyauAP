@@ -53,8 +53,7 @@ public class ItemUtil {
         }
         Item item = itemStack.getItem();
         if (item instanceof ItemEgg) return true;
-        if (item instanceof ItemSnowball) return true;
-        return false;
+        return item instanceof ItemSnowball;
     }
 
     public static boolean isContainerBlock(ItemBlock itemBlock) {
@@ -432,6 +431,7 @@ public class ItemUtil {
                 return itemStack.getItem() == Items.arrow;
             }
         };
+
         abstract public boolean contains(ItemStack itemStack);
     }
 }

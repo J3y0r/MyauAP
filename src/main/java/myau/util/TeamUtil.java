@@ -53,7 +53,7 @@ public class TeamUtil {
                 colorCode = TeamUtil.mc.fontRendererObj.getColorCode(colorPrefix.charAt(1));
             }
         }
-        return new Color(colorCode & 0xFFFFFF | (int)(alpha * 255) << 24, true);
+        return new Color(colorCode & 0xFFFFFF | (int) (alpha * 255) << 24, true);
     }
 
     public static boolean isBot(EntityPlayer player) {

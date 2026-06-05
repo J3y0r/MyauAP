@@ -1,4 +1,3 @@
-
 package myau.ui.components;
 
 import myau.Myau;
@@ -11,8 +10,6 @@ import myau.ui.dataset.impl.FloatSlider;
 import myau.ui.dataset.impl.IntSlider;
 import myau.ui.dataset.impl.PercentageSlider;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -123,7 +120,7 @@ public class ModuleComponent implements Component {
     }
 
     public void update(int mousePosX, int mousePosY) {
-        if(!panelExpand) return;
+        if (!panelExpand) return;
         if (!this.settings.isEmpty()) {
             for (Component c : this.settings) {
                 if (c.isVisible()) {
@@ -143,7 +140,7 @@ public class ModuleComponent implements Component {
             this.panelExpand = !this.panelExpand;
         }
 
-        if(!panelExpand) return;
+        if (!panelExpand) return;
         for (Component c : this.settings) {
             if (c.isVisible()) {
                 c.mouseDown(x, y, button);
@@ -153,7 +150,7 @@ public class ModuleComponent implements Component {
     }
 
     public void mouseReleased(int x, int y, int button) {
-        if(!panelExpand) return;
+        if (!panelExpand) return;
         for (Component c : this.settings) {
             if (c.isVisible()) {
                 c.mouseReleased(x, y, button);
@@ -163,7 +160,7 @@ public class ModuleComponent implements Component {
     }
 
     public void keyTyped(char chatTyped, int keyCode) {
-        if(!panelExpand) return;
+        if (!panelExpand) return;
         for (Component c : this.settings) {
             if (c.isVisible()) {
                 c.keyTyped(chatTyped, keyCode);

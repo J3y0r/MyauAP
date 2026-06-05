@@ -3,6 +3,7 @@ package myau;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.ksyz.accountmanager.AccountManager;
+import myau.auth.AuthManager;
 import myau.command.CommandManager;
 import myau.command.commands.*;
 import myau.config.Config;
@@ -23,6 +24,7 @@ import java.util.Objects;
 public class Myau {
     public static String clientName = "&7[&cM&6y&ea&au&7]&r ";
     public static String version;
+    public static AuthManager authManager;
     public static RotationManager rotationManager;
     public static FloatManager floatManager;
     public static BlinkManager blinkManager;
@@ -41,6 +43,7 @@ public class Myau {
     }
 
     public void init() {
+        authManager = AuthManager.getInstance();
         rotationManager = new RotationManager();
         floatManager = new FloatManager();
         blinkManager = new BlinkManager();
@@ -53,6 +56,7 @@ public class Myau {
         propertyManager = new PropertyManager();
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
+        EventManager.register(authManager);
         EventManager.register(rotationManager);
         EventManager.register(floatManager);
         EventManager.register(blinkManager);

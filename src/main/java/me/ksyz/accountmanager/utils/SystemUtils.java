@@ -14,8 +14,8 @@ public class SystemUtils {
     public static void openWebLink(URI url) {
         try {
             Class<?> desktop = Class.forName("java.awt.Desktop");
-            Object object = desktop.getMethod("getDesktop", new Class[0]).invoke(null);
-            desktop.getMethod("browse", new Class[]{URI.class}).invoke(object, url);
+            Object object = desktop.getMethod("getDesktop").invoke(null);
+            desktop.getMethod("browse", URI.class).invoke(object, url);
         } catch (Exception exception) {
             //
         }

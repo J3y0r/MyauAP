@@ -5,11 +5,11 @@ import myau.event.types.Priority;
 import myau.events.*;
 import myau.mixin.IAccessorPlayerControllerMP;
 import myau.module.Module;
+import myau.property.properties.BooleanProperty;
+import myau.property.properties.IntProperty;
+import myau.property.properties.PercentProperty;
 import myau.util.PacketUtil;
 import myau.util.TimerUtil;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.PercentProperty;
-import myau.property.properties.IntProperty;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemSkull;
@@ -82,7 +82,7 @@ public class AutoHeal extends Module {
         if (!this.isEnabled()) {
             this.prevSlot = -1;
         } else {
-            if (hurtCheck.getValue()){
+            if (hurtCheck.getValue()) {
                 if (hurtTick > 0) hurtTick--;
                 if (mc.thePlayer.hurtTime > 0) {
                     hurtTick = hurtTime.getValue();

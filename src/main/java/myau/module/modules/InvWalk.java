@@ -115,7 +115,7 @@ public class InvWalk extends Module {
     public boolean temporaryStackIsEmpty() {
         if (mc.thePlayer.inventory.getItemStack() != null) return false;
         if (mc.thePlayer.inventoryContainer instanceof ContainerPlayer) {
-            ContainerPlayer containerPlayer = (ContainerPlayer)mc.thePlayer.inventoryContainer;
+            ContainerPlayer containerPlayer = (ContainerPlayer) mc.thePlayer.inventoryContainer;
             for (int i = 0; i < containerPlayer.craftMatrix.getSizeInventory(); i++) {
                 ItemStack stack = containerPlayer.craftMatrix.getStackInSlot(i);
                 if (stack != null) {
@@ -193,7 +193,7 @@ public class InvWalk extends Module {
                 C16PacketClientStatus packet = (C16PacketClientStatus) event.getPacket();
                 if (packet.getStatus() == EnumState.OPEN_INVENTORY_ACHIEVEMENT) {
                     event.setCancelled(true);
-                    if (this.mode.getValue() == 1){
+                    if (this.mode.getValue() == 1) {
                         this.pendingStatus = packet;
                     }
                 }
@@ -265,7 +265,7 @@ public class InvWalk extends Module {
                         KeyBinding.unPressAllKeys();
                         event.setCancelled(true);
                         this.clickQueue.offer(packet);
-                        if (this.closeDelayTicks < 0 && this.openDelayTicks < 0){
+                        if (this.closeDelayTicks < 0 && this.openDelayTicks < 0) {
                             this.pendingStatus = new C16PacketClientStatus(EnumState.OPEN_INVENTORY_ACHIEVEMENT);
                             this.openDelayTicks = openDelay.getValue();
                         }

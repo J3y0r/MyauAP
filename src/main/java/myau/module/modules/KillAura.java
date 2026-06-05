@@ -526,7 +526,7 @@ public class KillAura extends Module {
                                             break;
                                         case 1:
                                             if (this.isPlayerBlocking()) {
-                                                if(Myau.moduleManager.modules.get(NoSlow.class).isEnabled()){
+                                                if (Myau.moduleManager.modules.get(NoSlow.class).isEnabled()) {
                                                     int randomSlot = new Random().nextInt(9);
                                                     while (randomSlot == mc.thePlayer.inventory.currentItem) {
                                                         randomSlot = new Random().nextInt(9);
@@ -1110,14 +1110,14 @@ public class KillAura extends Module {
                 if (this.autoBlockMinCPS.getValue() > this.autoBlockMaxCPS.getValue()) {
                     this.autoBlockMaxCPS.setValue(this.autoBlockMinCPS.getValue());
                 }
-                if(autoBlockMinCPS.getValue() > 10 && badCps){
+                if (autoBlockMinCPS.getValue() > 10 && badCps) {
                     autoBlockMinCPS.setValue(10);
                 }
             } else if (this.autoBlockMaxCPS.getName().equals(value)) {
                 if (this.autoBlockMinCPS.getValue() > this.autoBlockMaxCPS.getValue()) {
                     this.autoBlockMinCPS.setValue(this.autoBlockMaxCPS.getValue());
                 }
-                if(autoBlockMaxCPS.getValue() > 10 && badCps){
+                if (autoBlockMaxCPS.getValue() > 10 && badCps) {
                     autoBlockMaxCPS.setValue(10);
                 }
             } else {

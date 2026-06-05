@@ -7,10 +7,10 @@ import myau.events.UpdateEvent;
 import myau.events.WindowClickEvent;
 import myau.mixin.IAccessorItemSword;
 import myau.module.Module;
-import myau.util.ChatUtil;
-import myau.util.ItemUtil;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.IntProperty;
+import myau.util.ChatUtil;
+import myau.util.ItemUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.resources.I18n;
@@ -46,7 +46,7 @@ public class ChestStealer extends Module {
     private boolean isMoreArmor(ItemStack itemStack) {
         if (itemStack == null) return false;
         if (!this.moreArmor.getValue()) return false;
-        if (! (itemStack.getItem() instanceof ItemArmor)) return false;
+        if (!(itemStack.getItem() instanceof ItemArmor)) return false;
         ItemArmor.ArmorMaterial armorMaterial = ((ItemArmor) itemStack.getItem()).getArmorMaterial();
         if (armorMaterial == ItemArmor.ArmorMaterial.DIAMOND) return true;
         return armorMaterial == ItemArmor.ArmorMaterial.IRON && itemStack.isItemEnchanted();
@@ -55,7 +55,7 @@ public class ChestStealer extends Module {
     private boolean isMoreSword(ItemStack itemStack) {
         if (itemStack == null) return false;
         if (!this.moreSword.getValue()) return false;
-        if (! (itemStack.getItem() instanceof ItemSword)) return false;
+        if (!(itemStack.getItem() instanceof ItemSword)) return false;
         Item.ToolMaterial swordMaterial = ((IAccessorItemSword) itemStack.getItem()).getMaterial();
         if (swordMaterial == Item.ToolMaterial.EMERALD) return true;
         if (EnchantmentHelper.getEnchantmentLevel(Enchantment.fireAspect.effectId, itemStack) != 0) return true;

@@ -17,7 +17,7 @@ public class GuiModule extends Module {
     @Override
     public void onEnabled() {
         setEnabled(false);
-        if(clickGui == null){
+        if (clickGui == null) {
             clickGui = new ClickGui();
         }
         mc.displayGuiScreen(clickGui);

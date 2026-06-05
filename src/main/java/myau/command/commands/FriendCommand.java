@@ -27,7 +27,7 @@ public class FriendCommand extends Command {
                         );
                         return;
                     }
-                    for (String name: args.subList(2, args.size())) {
+                    for (String name : args.subList(2, args.size())) {
                         String added = Myau.friendManager.add(name);
                         if (added == null) {
                             ChatUtil.sendFormatted(String.format("%s&o%s&r is already in your friend list&r", Myau.clientName, name));
@@ -44,7 +44,7 @@ public class FriendCommand extends Command {
                         );
                         return;
                     }
-                    for (String name: args.subList(2, args.size())){
+                    for (String name : args.subList(2, args.size())) {
                         String removed = Myau.friendManager.remove(name);
                         if (removed == null) {
                             ChatUtil.sendFormatted(String.format("%s&o%s&r is not in your friend list&r", Myau.clientName, name));

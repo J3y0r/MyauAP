@@ -1,4 +1,3 @@
-
 package myau.ui.components;
 
 import myau.Myau;
@@ -113,7 +112,7 @@ public class SliderComponent implements Component {
         if (this.isLeftHalfHovered(x, y) && this.parentModule.panelExpand) {
             if (button == 0) {
                 this.dragging = true;
-            } else if(button == 1 && this.decrement == 0) {
+            } else if (button == 1 && this.decrement == 0) {
                 this.decrement = System.currentTimeMillis() + 500;
                 this.slider.stepping(false);
             }
@@ -122,7 +121,7 @@ public class SliderComponent implements Component {
         if (this.isRightHalfHovered(x, y) && this.parentModule.panelExpand) {
             if (button == 0) {
                 this.dragging = true;
-            } else if(button == 1 && this.increment == 0) {
+            } else if (button == 1 && this.increment == 0) {
                 this.increment = System.currentTimeMillis() + 500;
                 this.slider.stepping(true);
             }

@@ -1,9 +1,9 @@
 package myau.module.modules;
 
 import myau.module.Module;
+import myau.property.properties.BooleanProperty;
 import myau.util.ItemUtil;
 import myau.util.TeamUtil;
-import myau.property.properties.BooleanProperty;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 

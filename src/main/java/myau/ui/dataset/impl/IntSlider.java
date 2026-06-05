@@ -1,7 +1,6 @@
 package myau.ui.dataset.impl;
 
 import myau.enums.ChatColors;
-import myau.property.properties.FloatProperty;
 import myau.property.properties.IntProperty;
 import myau.ui.dataset.Slider;
 

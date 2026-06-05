@@ -7,9 +7,9 @@ import myau.events.LivingUpdateEvent;
 import myau.events.StrafeEvent;
 import myau.mixin.IAccessorEntity;
 import myau.module.Module;
-import myau.util.MoveUtil;
 import myau.property.properties.FloatProperty;
 import myau.property.properties.PercentProperty;
+import myau.util.MoveUtil;
 import net.minecraft.client.Minecraft;
 
 public class Speed extends Module {

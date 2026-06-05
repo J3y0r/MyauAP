@@ -104,7 +104,7 @@ public class GuiMicrosoftAuth extends GuiScreen {
                     .thenAccept(session -> {
                         status = null;
                         Account acc = new Account(
-                                refreshToken.get(), accessToken.get(), session.getUsername(),"42a60a84-599d-44b2-a7c6-b00cdef1d6a2","XboxLive.signin XboxLive.offline_access"
+                                refreshToken.get(), accessToken.get(), session.getUsername(), "42a60a84-599d-44b2-a7c6-b00cdef1d6a2", "XboxLive.signin XboxLive.offline_access"
                         );
                         for (Account account : AccountManager.accounts) {
                             if (acc.getUsername().equals(account.getUsername())) {

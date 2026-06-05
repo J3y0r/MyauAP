@@ -294,11 +294,11 @@ public class GuiAccountManager extends GuiScreen {
                     mc.displayGuiScreen(previousScreen);
                 }
                 break;
-                case 4:{
+                case 4: {
                     mc.displayGuiScreen(new GuiSessionLogin(this));
                 }
                 break;
-                case 5:{
+                case 5: {
                     mc.displayGuiScreen(new GuiAddToken(this));
                 }
                 break;

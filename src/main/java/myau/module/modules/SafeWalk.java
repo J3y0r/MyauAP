@@ -6,11 +6,11 @@ import myau.event.types.EventType;
 import myau.events.SafeWalkEvent;
 import myau.events.UpdateEvent;
 import myau.module.Module;
+import myau.property.properties.BooleanProperty;
+import myau.property.properties.FloatProperty;
 import myau.util.ItemUtil;
 import myau.util.MoveUtil;
 import myau.util.PlayerUtil;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.FloatProperty;
 import net.minecraft.client.Minecraft;
 
 public class SafeWalk extends Module {

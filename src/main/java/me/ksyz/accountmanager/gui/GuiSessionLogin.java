@@ -23,7 +23,7 @@ import java.net.URL;
  * This modified version is licensed under the GNU GPL v3.
  */
 public class GuiSessionLogin extends GuiScreen {
-    private GuiScreen previousScreen;
+    private final GuiScreen previousScreen;
 
     private String status = "Session Login";
     private GuiTextField sessionField;
@@ -38,7 +38,7 @@ public class GuiSessionLogin extends GuiScreen {
         Keyboard.enableRepeatEvents(true);
         sr = new ScaledResolution(mc);
 
-        sessionField = new GuiTextField(1, mc.fontRendererObj,sr.getScaledWidth() / 2 - 100, sr.getScaledHeight() / 2, 200, 20);
+        sessionField = new GuiTextField(1, mc.fontRendererObj, sr.getScaledWidth() / 2 - 100, sr.getScaledHeight() / 2, 200, 20);
         sessionField.setMaxStringLength(32767);
         sessionField.setFocused(true);
 
@@ -94,13 +94,13 @@ public class GuiSessionLogin extends GuiScreen {
 
                 SessionManager.set(new Session(username, uuid, token, "mojang"));
                 mc.displayGuiScreen(previousScreen);
-            } catch (IOException IOException){
-                if(IOException.getMessage().contains("401")){
+            } catch (IOException IOException) {
+                if (IOException.getMessage().contains("401")) {
                     status = "§cError: Invalid session.";
-                }  else {
+                } else {
                     IOException.printStackTrace();
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 status = "§cError: Couldn't set session (check mc logs)";
                 e.printStackTrace();
             }

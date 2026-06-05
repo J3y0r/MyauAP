@@ -33,11 +33,10 @@ public class InventoryClicker extends Module {
                 final int mouseY = screen.height - Mouse.getEventY() * screen.height / mc.displayHeight - 1;
                 if (Mouse.isButtonDown(0)) {
                     ticks++;
-                    if(ticks > triggerTicks.getValue())
-                    {
-                        ((IAccessorGuiScreen)screen).callMouseClicked(mouseX, mouseY, 0);
+                    if (ticks > triggerTicks.getValue()) {
+                        ((IAccessorGuiScreen) screen).callMouseClicked(mouseX, mouseY, 0);
                     }
-                }else {
+                } else {
                     ticks = 0;
                 }
             }

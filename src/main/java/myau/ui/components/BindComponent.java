@@ -7,8 +7,6 @@ import myau.ui.Component;
 import myau.ui.dataset.BindStage;
 import myau.util.KeyBindUtil;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,12 +45,12 @@ public class BindComponent implements Component {
             this.isBinding = !this.isBinding;
         } else if (this.isBinding && this.parentModule.panelExpand) {
             int keyIndex = button - 100;
-            
+
             if (button == 0) {
                 this.isBinding = false;
                 return;
             }
-            
+
             this.parentModule.mod.setKey(keyIndex);
             this.isBinding = false;
         }
@@ -70,8 +68,8 @@ public class BindComponent implements Component {
                 this.isBinding = false;
                 return;
             }
-            
-            if (keyCode == 11) { 
+
+            if (keyCode == 11) {
                 if (this.parentModule.mod instanceof GuiModule) {
                     this.parentModule.mod.setKey(54);
                 } else {

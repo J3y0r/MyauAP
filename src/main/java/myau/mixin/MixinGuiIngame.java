@@ -31,7 +31,7 @@ public abstract class MixinGuiIngame {
             }
         }
         AutoBlockIn autoBlockIn = (AutoBlockIn) Myau.moduleManager.modules.get(AutoBlockIn.class);
-        if(autoBlockIn.itemSpoof.getValue() && autoBlockIn.isEnabled()){
+        if (autoBlockIn.itemSpoof.getValue() && autoBlockIn.isEnabled()) {
             int slot = autoBlockIn.getSlot();
             if (slot >= 0) {
                 return inventoryPlayer.getStackInSlot(slot);

@@ -20,7 +20,7 @@ public class ModuleManager {
         return this.modules.values().stream().filter(mD -> mD.getName().equalsIgnoreCase(string)).findFirst().orElse(null);
     }
 
-    public Module getModule(Class<?> clazz){
+    public Module getModule(Class<?> clazz) {
         return this.modules.get(clazz);
     }
 
@@ -39,7 +39,7 @@ public class ModuleManager {
             if (hud != null && shouldNotify) {
                 shouldNotify = hud.toggleAlerts.getValue();
             }
-            if(module instanceof GuiModule){
+            if (module instanceof GuiModule) {
                 shouldNotify = false;
             }
             if (shouldNotify) {

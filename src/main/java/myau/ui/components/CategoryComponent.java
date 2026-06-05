@@ -27,7 +27,8 @@ public class CategoryComponent {
     public int xx;
     public int yy;
     public boolean pin = false;
-    private double marginY, marginX;
+    private final double marginY;
+    private final double marginX;
     private int scroll = 0;
     private double animScroll = 0;
     private int height = 0;

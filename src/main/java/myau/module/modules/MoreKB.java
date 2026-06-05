@@ -45,7 +45,7 @@ public class MoreKB extends Module {
         }
         if (this.mode.getValue() == 1) {
             if (this.target != null && this.isMoving()) {
-                if ((this.onlyGround.getValue() && mc.thePlayer.onGround) || !this.onlyGround.getValue()) {
+                if (!this.onlyGround.getValue() || mc.thePlayer.onGround) {
                     mc.thePlayer.sprintingTicksLeft = 0;
                 }
                 this.target = null;

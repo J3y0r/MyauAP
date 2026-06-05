@@ -1,7 +1,6 @@
 package myau.ui.dataset.impl;
 
 import myau.enums.ChatColors;
-import myau.property.properties.IntProperty;
 import myau.property.properties.PercentProperty;
 import myau.ui.dataset.Slider;
 
