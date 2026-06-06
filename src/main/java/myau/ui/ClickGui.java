@@ -84,6 +84,7 @@ public class ClickGui extends GuiScreen {
         List<Module> playerModules = new ArrayList<>();
         playerModules.add(Myau.moduleManager.getModule(AutoHeal.class));
         playerModules.add(Myau.moduleManager.getModule(AutoTool.class));
+        playerModules.add(Myau.moduleManager.getModule(ChestAura.class));
         playerModules.add(Myau.moduleManager.getModule(ChestStealer.class));
         playerModules.add(Myau.moduleManager.getModule(InvManager.class));
         playerModules.add(Myau.moduleManager.getModule(InvWalk.class));

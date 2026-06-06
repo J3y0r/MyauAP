@@ -41,7 +41,8 @@ public class Velocity extends Module {
     public final BooleanProperty debugLog = new BooleanProperty("debug-log", false);
     public final BooleanProperty reduceWhenCanAttack = new BooleanProperty("reduce-when-can-attack", true, () -> this.mode.getValue() == 1 || this.mode.getValue() == 2);
     public final BooleanProperty reduce = new BooleanProperty("reduce", true, () -> this.mode.getValue() == 1);
-    public final IntProperty attackTimes = new IntProperty("attack-times", 1, 1, 5, () -> this.mode.getValue() == 1 && this.reduce.getValue());
+    public final BooleanProperty smartAttack = new BooleanProperty("smart-attack", false, () -> (this.mode.getValue() == 1 && this.reduce.getValue()) || this.mode.getValue() == 2);
+    public final IntProperty attackTimes = new IntProperty("attack-times", 1, 1, 5, () -> (this.mode.getValue() == 1 && this.reduce.getValue() || this.mode.getValue() == 2) && !this.smartAttack.getValue());
     public final BooleanProperty jump = new BooleanProperty("jump", true, () -> this.mode.getValue() == 1);
     public final BooleanProperty delay = new BooleanProperty("delay", false, () -> this.mode.getValue() == 1);
     public final BooleanProperty airBuffer = new BooleanProperty("air-buffer", true, () -> this.mode.getValue() == 1 && this.delay.getValue());
@@ -64,12 +65,18 @@ public class Velocity extends Module {
     private int rotateTickCounter = 0;
     private int ticksSinceVelocity = -1;
     private int reduceTick = -1;
+    private double rawKnockbackMagnitude = 0.0;
     private double knockbackX = 0.0;
     private double knockbackZ = 0.0;
     private float[] targetRotation = null;
 
     public Velocity() {
         super("Velocity", false);
+    }
+
+    private int calculateSmartAttackTimes() {
+        int result = (int) Math.round(6.43153527E-4 * this.rawKnockbackMagnitude + 2.9419087136);
+        return Math.max(1, Math.min(result, 10));
     }
 
     private boolean isInLiquidOrWeb() {
@@ -119,6 +126,7 @@ public class Velocity extends Module {
         this.reduceTick = -1;
         this.knockbackX = 0.0;
         this.knockbackZ = 0.0;
+        this.rawKnockbackMagnitude = 0.0;
         this.targetRotation = null;
         hasReceivedVelocity = false;
         if (Myau.delayManager.getDelayModule() == DelayModules.VELOCITY) {
@@ -212,7 +220,8 @@ public class Velocity extends Module {
                 }
             }
             if ((this.mode.getValue() == 1 && this.reduce.getValue() || this.mode.getValue() == 2) && hasReceivedVelocity) {
-                if (this.reduceTick >= this.attackTimes.getValue()) {
+                int effectiveAttackTimes = this.smartAttack.getValue() ? this.calculateSmartAttackTimes() : this.attackTimes.getValue();
+                if (this.reduceTick >= effectiveAttackTimes) {
                     this.reduceTick = 0;
                     hasReceivedVelocity = false;
                 }
@@ -337,6 +346,7 @@ public class Velocity extends Module {
             if (packet.getEntityID() == mc.thePlayer.getEntityId()) {
                 double motionX = (double) packet.getMotionX() / 8000.0;
                 double motionZ = (double) packet.getMotionZ() / 8000.0;
+                this.rawKnockbackMagnitude = Math.hypot(packet.getMotionX(), packet.getMotionZ());
                 if (this.mode.getValue() == 1) {
                     if (!this.delay.getValue()) {
                         hasReceivedVelocity = true;
@@ -377,9 +387,9 @@ public class Velocity extends Module {
                     }
                 }
                 if (this.debugLog.getValue()) {
-                    ChatUtil.sendFormatted(
+                    StringBuilder sb = new StringBuilder(
                             String.format(
-                                    "%sVelocity (&otick: %d, x: %.2f, y: %.2f, z: %.2f&r)&r",
+                                    "%sVelocity (&otick: %d, x: %.2f, y: %.2f, z: %.2f&r)",
                                     Myau.clientName,
                                     mc.thePlayer.ticksExisted,
                                     motionX,
@@ -387,6 +397,11 @@ public class Velocity extends Module {
                                     motionZ
                             )
                     );
+                    if (this.smartAttack.getValue() && ((this.mode.getValue() == 1 && this.reduce.getValue()) || this.mode.getValue() == 2)) {
+                        sb.append(String.format(" &bsmart-attack: %d&r", this.calculateSmartAttackTimes()));
+                    }
+                    sb.append("&r");
+                    ChatUtil.sendFormatted(sb.toString());
                 }
             }
             return;
