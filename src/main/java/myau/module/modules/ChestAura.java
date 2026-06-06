@@ -3,16 +3,15 @@ package myau.module.modules;
 import myau.Myau;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
-import myau.events.LoadWorldEvent;
-import myau.events.PacketEvent;
-import myau.events.TickEvent;
-import myau.events.UpdateEvent;
+import myau.events.*;
+import myau.management.RotationState;
 import myau.module.Module;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.FloatProperty;
 import myau.property.properties.IntProperty;
 import myau.property.properties.ModeProperty;
 import myau.util.ChatUtil;
+import myau.util.MoveUtil;
 import myau.util.TeamUtil;
 import myau.util.TimerUtil;
 import net.minecraft.block.Block;
@@ -49,6 +48,7 @@ public class ChestAura extends Module {
     public final BooleanProperty antiScaffold = new BooleanProperty("anti-scaffold", true);
     public final FloatProperty range = new FloatProperty("range", 4.0F, 1.0F, 6.0F);
     public final IntProperty delay = new IntProperty("delay", 200, 50, 500);
+    public final ModeProperty moveFix = new ModeProperty("move-fix", 0, new String[]{"NONE", "SILENT", "STRICT"});
     public final BooleanProperty throughWalls = new BooleanProperty("through-walls", true);
     public final FloatProperty wallsRange = new FloatProperty("walls-range", 3.0F, 1.0F, 5.0F, this.throughWalls::getValue);
     public final FloatProperty minDistanceFromOpponent = new FloatProperty("min-distance-from-opponent", 10.0F, 0.0F, 30.0F);
@@ -107,6 +107,7 @@ public class ChestAura extends Module {
 
         float[] rotations = this.getRotations(this.target.clickVec);
         event.setRotation(rotations[0], rotations[1], 1);
+        event.setPervRotation(this.moveFix.getValue() != 0 ? rotations[0] : mc.thePlayer.rotationYaw, 1);
         if (this.timer.hasTimeElapsed(this.delay.getValue())) {
             this.pendingOpenTarget = this.target;
             this.pendingOpenYaw = rotations[0];
@@ -171,6 +172,18 @@ public class ChestAura extends Module {
     @EventTarget
     public void onLoadWorld(LoadWorldEvent event) {
         this.resetState();
+    }
+
+    @EventTarget
+    public void onMove(MoveInputEvent event) {
+        if (this.isEnabled()) {
+            if (this.moveFix.getValue() == 1
+                    && RotationState.isActived()
+                    && RotationState.getPriority() == 0.0F
+                    && MoveUtil.isForwardPressed()) {
+                MoveUtil.fixStrafe(RotationState.getSmoothedYaw());
+            }
+        }
     }
 
     private void resetState() {
