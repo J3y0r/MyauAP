@@ -40,7 +40,7 @@ public class HitFlick extends Module {
         this.state = FlickState.IDLE;
         this.sinceLastFlick = 0L;
         if (this.blink.getValue()) {
-            Myau.blinkManager.setBlinkState(false, BlinkModules.HITFLICK);
+            Myau.blinkManager.setBlinkState(false, BlinkModules.HIT_FLICK);
         }
     }
 
@@ -62,7 +62,7 @@ public class HitFlick extends Module {
 
         if (this.blink.getValue()) {
             Myau.blinkManager.setBlinkState(false, Myau.blinkManager.getBlinkingModule());
-            Myau.blinkManager.setBlinkState(true, BlinkModules.HITFLICK);
+            Myau.blinkManager.setBlinkState(true, BlinkModules.HIT_FLICK);
         }
     }
 
@@ -82,7 +82,7 @@ public class HitFlick extends Module {
             this.state = FlickState.IDLE;
             this.sinceLastFlick = 0L;
             if (this.blink.getValue()) {
-                Myau.blinkManager.setBlinkState(false, BlinkModules.HITFLICK);
+                Myau.blinkManager.setBlinkState(false, BlinkModules.HIT_FLICK);
             }
         }
     }

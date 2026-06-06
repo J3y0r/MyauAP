@@ -29,9 +29,9 @@ import net.minecraft.util.MovingObjectPosition;
 public class Velocity extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static boolean hasReceivedVelocity = false;
-    public final ModeProperty mode = new ModeProperty("mode", 0, new String[]{"VANILLA", "PREDICTION", "REDUCE", "JUMP", "DELAY", "REVERSE", "LEGIT_TEST", "LEGIT"});
-    public final IntProperty delayTicks = new IntProperty("delay-ticks", 3, 1, 20, () -> this.mode.getValue() == 4 || this.mode.getValue() == 7);
-    public final PercentProperty delayChance = new PercentProperty("delay-chance", 100, () -> this.mode.getValue() == 4 || this.mode.getValue() == 7);
+    public final ModeProperty mode = new ModeProperty("mode", 0, new String[]{"VANILLA", "PREDICTION", "REDUCE", "JUMP", "DELAY", "REVERSE", "LEGIT_TEST"});
+    public final IntProperty delayTicks = new IntProperty("delay-ticks", 3, 1, 20, () -> this.mode.getValue() == 4);
+    public final PercentProperty delayChance = new PercentProperty("delay-chance", 100, () -> this.mode.getValue() == 4);
     public final PercentProperty chance = new PercentProperty("chance", 100);
     public final PercentProperty horizontal = new PercentProperty("horizontal", 0);
     public final PercentProperty vertical = new PercentProperty("vertical", 100);
@@ -163,7 +163,7 @@ public class Velocity extends Module {
             }
             this.chanceCounter = this.chanceCounter % 100 + this.chance.getValue();
             if (this.chanceCounter >= 100) {
-                this.jumpFlag = (this.mode.getValue() == 3 || this.mode.getValue() == 4 || this.mode.getValue() == 7) && event.getY() > 0.0;
+                this.jumpFlag = (this.mode.getValue() == 3 || this.mode.getValue() == 4) && event.getY() > 0.0;
                 this.delayActive = this.mode.getValue() == 5;
                 if (this.mode.getValue() == 0 || this.mode.getValue() >= 3) {
                     if (this.horizontal.getValue() > 0) {
@@ -360,7 +360,7 @@ public class Velocity extends Module {
                     }
                 }
                 LongJump longJump = (LongJump) Myau.moduleManager.modules.get(LongJump.class);
-                if ((this.mode.getValue() == 4 || this.mode.getValue() == 7)
+                if (this.mode.getValue() == 4
                         && !this.reverseFlag
                         && !this.canDelay()
                         && !this.isInLiquidOrWeb()
@@ -373,9 +373,6 @@ public class Velocity extends Module {
                         Myau.delayManager.delayedPacket.offer(packet);
                         event.setCancelled(true);
                         this.reverseFlag = true;
-                        if (this.mode.getValue() == 7) {
-                            this.jumpFlag = true;
-                        }
                         return;
                     }
                 }
