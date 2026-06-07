@@ -32,17 +32,13 @@ import java.util.Random;
 
 public class NoSlow extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private int lastSlot = -1;
-    private int count;
-    private int delay;
-    private boolean post;
-    private final Random random = new Random();
     public final ModeProperty swordMode = new ModeProperty("sword-mode", 1, new String[]{"NONE", "VANILLA", "PREDICTION", "PREDICTION-SEMI", "GRIM"});
     public final IntProperty cancelTick = new IntProperty("cancel-tick", 1, 0, 2, () -> swordMode.getValue() == 3);
     public final IntProperty cancelTick2 = new IntProperty("cancel-tick2", 1, 0, 2, () -> swordMode.getValue() == 3);
-    public final IntProperty swapDelay = new IntProperty("SwapDelay", 0, 0, 3, () -> swordMode.getValue() == 2);
-    public final BooleanProperty blink = new BooleanProperty("Blink", false, () -> swordMode.getValue() == 2);
-    public final BooleanProperty c17 = new BooleanProperty("C17Packet", false, () -> swordMode.getValue() == 2);
+    public final IntProperty swapDelay = new IntProperty("swap-delay", 0, 0, 3, () -> swordMode.getValue() == 2);
+    public final BooleanProperty blink = new BooleanProperty("blink", false, () -> swordMode.getValue() == 2);
+    public final BooleanProperty c17 = new BooleanProperty("c17-packet", false, () -> swordMode.getValue() == 2);
+    public final BooleanProperty noAttack = new BooleanProperty("no-attack", false, () -> swordMode.getValue() == 2);
     public final PercentProperty swordMotion = new PercentProperty("sword-motion", 100, () -> this.swordMode.getValue() == 1);
     public final BooleanProperty swordSprint = new BooleanProperty("sword-sprint", true, () -> this.swordMode.getValue() != 0);
     public final BooleanProperty killauraonly = new BooleanProperty("killaura-only", false, () -> this.swordMode.getValue() != 0);
@@ -52,6 +48,11 @@ public class NoSlow extends Module {
     public final ModeProperty bowMode = new ModeProperty("bow-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT", "GRIM"});
     public final PercentProperty bowMotion = new PercentProperty("bow-motion", 100, () -> this.bowMode.getValue() == 1);
     public final BooleanProperty bowSprint = new BooleanProperty("bow-sprint", true, () -> this.bowMode.getValue() != 0);
+    private final Random random = new Random();
+    private int lastSlot = -1;
+    private int count;
+    private int delay;
+    private boolean post;
 
     public NoSlow() {
         super("NoSlow", false);
@@ -79,12 +80,6 @@ public class NoSlow extends Module {
                 || this.bowMode.getValue() == 2 && ItemUtil.isUsingBow();
     }
 
-    public boolean isGrimMode() {
-        return this.swordMode.getValue() == 4 && ItemUtil.isHoldingSword()
-                || this.foodMode.getValue() == 3 && ItemUtil.isEating()
-                || this.bowMode.getValue() == 3 && ItemUtil.isUsingBow();
-    }
-
     public boolean isAnyActive() {
         if (swordMode.getValue() == 3 && isSwordActive()) {
             KillAura killAura = (KillAura) Myau.moduleManager.modules.get(KillAura.class);
@@ -92,7 +87,10 @@ public class NoSlow extends Module {
                     && (killAura.blockTick == cancelTick.getValue() || killAura.blockTick == cancelTick2.getValue());
         }
         if (swordMode.getValue() == 2 && isSwordActive()) {
-            return delay == 0;
+            KillAura killAura = (KillAura) Myau.moduleManager.getModule(KillAura.class);
+            if (!noAttack.getValue() || !((killAura.blockTick == 0 && killAura.autoBlock.getValue() == 3) || (killAura.autoBlock.getValue() == 10 && killAura.blockTick == killAura.attackTick.getValue()) || (killAura.autoBlock.getValue() != 10 && killAura.autoBlock.getValue() != 3) || (killAura.autoBlock.getValue() == 9 && killAura.blockTick == 0) && killAura.isEnabled() && killAura.isPlayerBlocking())) {
+                return delay == 0;
+            }
         }
         return mc.thePlayer.isUsingItem() && (this.isSwordActive() || this.isFoodActive() || this.isBowActive());
     }
@@ -133,18 +131,21 @@ public class NoSlow extends Module {
             if (swordMode.getValue() == 2) {
                 delay--;
                 if (delay < 0) {
-                    int randomSlot = random.nextInt(9);
-                    while (randomSlot == mc.thePlayer.inventory.currentItem) {
-                        randomSlot = random.nextInt(9);
+                    KillAura killAura = (KillAura) Myau.moduleManager.getModule(KillAura.class);
+                    if (!noAttack.getValue() || !((killAura.blockTick == 0 && killAura.autoBlock.getValue() == 2) || (killAura.autoBlock.getValue() == 6 && killAura.blockTick == killAura.attackTick.getValue()) || (killAura.autoBlock.getValue() != 6 && killAura.autoBlock.getValue() != 2) || (killAura.autoBlock.getValue() == 5 && killAura.blockTick == 0) && killAura.isEnabled() && killAura.isPlayerBlocking())) {
+                        int randomSlot = new Random().nextInt(9);
+                        while (randomSlot == mc.thePlayer.inventory.currentItem) {
+                            randomSlot = new Random().nextInt(9);
+                        }
+                        if (blink.getValue()) {
+                            Myau.blinkManager.setBlinkState(true, BlinkModules.NO_SLOW);
+                        }
+                        PacketUtil.sendPacket(new C09PacketHeldItemChange(randomSlot));
+                        if (c17.getValue()) {
+                            PacketUtil.sendPacket(new C17PacketCustomPayload("myauhacker", new PacketBuffer(Unpooled.buffer())));
+                        }
+                        PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
                     }
-                    if (blink.getValue()) {
-                        Myau.blinkManager.setBlinkState(true, BlinkModules.NO_SLOW);
-                    }
-                    PacketUtil.sendPacket(new C09PacketHeldItemChange(randomSlot));
-                    if (c17.getValue()) {
-                        PacketUtil.sendPacket(new C17PacketCustomPayload("woshijiejue", new PacketBuffer(Unpooled.buffer())));
-                    }
-                    PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
                     post = true;
                     delay = swapDelay.getValue();
                 }
@@ -159,7 +160,7 @@ public class NoSlow extends Module {
                     Myau.blinkManager.setBlinkState(false, BlinkModules.NO_SLOW);
                     PacketUtil.sendPacket(new C09PacketHeldItemChange(randomSlot));
                     if (c17.getValue()) {
-                        PacketUtil.sendPacket(new C17PacketCustomPayload("woshijiejue", new PacketBuffer(Unpooled.buffer())));
+                        PacketUtil.sendPacket(new C17PacketCustomPayload("myauhacker", new PacketBuffer(Unpooled.buffer())));
                     }
                     PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
                 }

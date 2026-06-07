@@ -4,330 +4,317 @@ import myau.Myau;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
 import myau.events.*;
+import myau.mixin.IAccessorS14PacketEntity;
 import myau.module.Module;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.FloatProperty;
-import myau.property.properties.IntProperty;
-import myau.property.properties.ModeProperty;
-import myau.util.TimerUtil;
+import myau.property.properties.*;
+import myau.util.PacketUtil;
+import myau.util.TimedPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.entity.Entity;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.Packet;
-import net.minecraft.network.ThreadQuickExitException;
-import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.network.play.server.*;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BackTrack extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
-
-    public final IntProperty latencyMin = new IntProperty("latency-min", 50, 10, 500);
-    public final IntProperty latencyMax = new IntProperty("latency-max", 100, 50, 1000);
-    public final FloatProperty distanceMin = new FloatProperty("distance-min", 0.0F, 0.0F, 6.0F);
-    public final FloatProperty distanceMax = new FloatProperty("distance-max", 4.0F, 0.5F, 6.0F);
-    public final ModeProperty espMode = new ModeProperty("esp-mode", 1, new String[]{"NONE", "HITBOX", "HUD"});
-    public final ModeProperty releaseStyle = new ModeProperty("style", 0, new String[]{"PULSE", "SMOOTH"});
-    public final BooleanProperty smart = new BooleanProperty("smart", true);
-
+    public final ModeProperty colorMode = new ModeProperty("color", 0, new String[]{"CUSTOM", "HUD"});
+    public final ColorProperty customColor = new ColorProperty("custom-color", -1, () -> this.colorMode.getValue() == 0);
+    private final IntProperty minLatency = new IntProperty("min-ms", 50, 10, 1000);
+    private final IntProperty maxLatency = new IntProperty("max-ms", 100, 10, 1000);
+    private final FloatProperty minDistance = new FloatProperty("min-distance", 0.0F, 0.0F, 3.0F);
+    private final FloatProperty maxDistance = new FloatProperty("max-distance", 6.0F, 0.0F, 10.0F);
+    private final IntProperty stopOnTargetHurtTime = new IntProperty("player-hurttime", -1, -1, 10);
+    private final IntProperty stopOnSelfHurtTime = new IntProperty("stop-on-get-hurt", -1, -1, 10);
+    private final BooleanProperty drawESP = new BooleanProperty("esp", true);
     private final Queue<TimedPacket> packetQueue = new ConcurrentLinkedQueue<>();
     private final List<Packet<?>> skipPackets = new ArrayList<>();
-    private final TimerUtil cycleTimer = new TimerUtil();
-    private final Random random = new Random();
-
-    private Vec3 realPosition;
+    private Vec3 vec3;
     private EntityPlayer target;
-    private int currentLatency;
+    private int currentLatency = 0;
 
     public BackTrack() {
         super("BackTrack", false);
     }
 
+    public static void drawBoundingBox(AxisAlignedBB abb, float r, float g, float b) {
+        drawBoundingBox(abb, r, g, b, 0.25f);
+    }
+
+    public static void drawBoundingBox(@NotNull AxisAlignedBB abb, float r, float g, float b, float a) {
+        Tessellator ts = Tessellator.getInstance();
+        WorldRenderer vb = ts.getWorldRenderer();
+        vb.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        vb.pos(abb.minX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        ts.draw();
+        vb.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        vb.pos(abb.maxX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        ts.draw();
+        vb.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        vb.pos(abb.minX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        ts.draw();
+        vb.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        vb.pos(abb.minX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        ts.draw();
+        vb.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        vb.pos(abb.minX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        ts.draw();
+        vb.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        vb.pos(abb.minX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.minX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.minZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.maxY, abb.maxZ).color(r, g, b, a).endVertex();
+        vb.pos(abb.maxX, abb.minY, abb.maxZ).color(r, g, b, a).endVertex();
+        ts.draw();
+    }
+
+    private Color getColor() {
+        switch (this.colorMode.getValue()) {
+            case 0:
+                return new Color(this.customColor.getValue());
+            case 1:
+                return ((HUD) Myau.moduleManager.modules.get(HUD.class)).getColor(System.currentTimeMillis());
+            default:
+                return new Color(-1);
+        }
+    }
+
+    public void drawBox(@NotNull Vec3 pos) {
+        GlStateManager.pushMatrix();
+        double x = pos.xCoord - mc.getRenderManager().viewerPosX;
+        double y = pos.yCoord - mc.getRenderManager().viewerPosY;
+        double z = pos.zCoord - mc.getRenderManager().viewerPosZ;
+        AxisAlignedBB bbox = mc.thePlayer.getEntityBoundingBox().expand(0.1D, 0.1, 0.1);
+        AxisAlignedBB axis = new AxisAlignedBB(bbox.minX - mc.thePlayer.posX + x, bbox.minY - mc.thePlayer.posY + y, bbox.minZ - mc.thePlayer.posZ + z, bbox.maxX - mc.thePlayer.posX + x, bbox.maxY - mc.thePlayer.posY + y, bbox.maxZ - mc.thePlayer.posZ + z);
+        float a = (float) (getColor().getRGB() >> 24 & 255) / 255.0F;
+        float r = (float) (getColor().getRGB() >> 16 & 255) / 255.0F;
+        float g = (float) (getColor().getRGB() >> 8 & 255) / 255.0F;
+        float b = (float) (getColor().getRGB() & 255) / 255.0F;
+        GL11.glBlendFunc(770, 771);
+        GL11.glEnable(3042);
+        GL11.glDisable(3553);
+        GL11.glDisable(2929);
+        GL11.glDepthMask(false);
+        GL11.glLineWidth(2.0F);
+        GL11.glColor4f(r, g, b, a);
+        drawBoundingBox(axis, r, g, b);
+        GL11.glEnable(3553);
+        GL11.glEnable(2929);
+        GL11.glDepthMask(true);
+        GL11.glDisable(3042);
+        GlStateManager.popMatrix();
+    }
+
+    @Override
+    public String[] getSuffix() {
+        return new String[]{minLatency.getValue() + "-" + maxLatency.getValue()};
+    }
+
     @Override
     public void onEnabled() {
-        resetState(false);
+        packetQueue.clear();
+        skipPackets.clear();
+        vec3 = null;
+        target = null;
     }
 
     @Override
     public void onDisabled() {
         releaseAll();
-        resetState(false);
     }
 
     @EventTarget
-    public void onLoadWorld(LoadWorldEvent event) {
-        releaseAll();
-        resetState(false);
-    }
-
-    @EventTarget
-    public void onTick(TickEvent event) {
-        if (!isEnabled() || event.getType() != EventType.PRE || mc.thePlayer == null) {
-            return;
+    public void onUpdate(UpdateEvent e) {
+        if (!isEnabled() || e.getType() == EventType.POST || target == null) return;
+        if (vec3.distanceTo(mc.thePlayer.getPositionVector()) < target.getPositionVector().distanceTo(mc.thePlayer.getPositionVector())) {
+            currentLatency = 0;
         }
-
-        if (target == null || realPosition == null) {
-            return;
-        }
-
-        if (target.isDead || mc.theWorld == null || mc.theWorld.getEntityByID(target.getEntityId()) == null) {
-            releaseAll();
-            resetState(false);
-            return;
-        }
-
-        if (smart.getValue() && target.hurtTime <= 2) {
-            double currentDistance = mc.thePlayer.getDistanceToEntity(target);
-            double backtrackDistance = mc.thePlayer.getDistance(realPosition.xCoord, realPosition.yCoord, realPosition.zCoord);
-            if (currentDistance + 0.5D < backtrackDistance) {
-                releaseAll();
-                resetState(false);
-                return;
+        try {
+            final double distance = vec3.distanceTo(mc.thePlayer.getPositionVector());
+            if (distance > maxDistance.getValue() || distance < minDistance.getValue()) {
+                currentLatency = 0;
             }
-        }
 
-        double distance = mc.thePlayer.getDistanceToEntity(target);
-        if (distance < distanceMin.getValue() || distance > distanceMax.getValue()) {
-            releaseAll();
-            resetState(false);
-            return;
+        } catch (NullPointerException ignored) {
         }
+    }
 
-        if (releaseStyle.getValue() == 0) {
-            releasePulse();
-        } else {
-            releaseSmooth();
+    @EventTarget
+    public void onTick(TickEvent e) {
+        if (!isEnabled() || e.getType() == EventType.POST) return;
+        while (!packetQueue.isEmpty()) {
+            try {
+                if (packetQueue.element().getCold().getCum(currentLatency)) {
+                    Packet<?> packet = packetQueue.remove().getPacket();
+                    skipPackets.add(packet);
+                    PacketUtil.receivePacket(packet);
+                } else {
+                    break;
+                }
+            } catch (NullPointerException ignored) {
+            }
         }
 
         if (packetQueue.isEmpty() && target != null) {
-            realPosition = target.getPositionVector();
+            vec3 = target.getPositionVector();
         }
     }
 
-    @EventTarget
-    public void onPacket(PacketEvent event) {
-        if (!isEnabled() || event.getType() != EventType.RECEIVE) {
-            return;
-        }
-
-        if (mc.thePlayer == null || mc.theWorld == null || mc.thePlayer.ticksExisted < 20) {
-            packetQueue.clear();
-            return;
-        }
-
-        Packet<?> packet = event.getPacket();
-        if (skipPackets.remove(packet)) {
-            return;
-        }
-
-        if (target == null || realPosition == null) {
-            releaseAll();
-            return;
-        }
-
-        if (event.isCancelled()) {
-            return;
-        }
-
-        if (packet instanceof S08PacketPlayerPosLook || packet instanceof S40PacketDisconnect) {
-            releaseAll();
-            resetState(false);
-            return;
-        }
-
-        if (packet instanceof S13PacketDestroyEntities) {
-            S13PacketDestroyEntities destroy = (S13PacketDestroyEntities) packet;
-            for (int id : destroy.getEntityIDs()) {
-                if (id == target.getEntityId()) {
-                    releaseAll();
-                    resetState(false);
-                    return;
-                }
-            }
-        }
-
-        if (packet instanceof S14PacketEntity) {
-            S14PacketEntity entityPacket = (S14PacketEntity) packet;
-            Entity entity = entityPacket.getEntity(mc.theWorld);
-            if (entity == null || entity.getEntityId() != target.getEntityId() || packetQueue.size() >= 50) {
-                return;
-            }
-
-            realPosition = realPosition.addVector(
-                    entityPacket.func_149062_c() / 32.0D,
-                    entityPacket.func_149061_d() / 32.0D,
-                    entityPacket.func_149064_e() / 32.0D
-            );
-            queuePacket(packet, event);
-        } else if (packet instanceof S18PacketEntityTeleport) {
-            S18PacketEntityTeleport teleport = (S18PacketEntityTeleport) packet;
-            if (teleport.getEntityId() != target.getEntityId() || packetQueue.size() >= 50) {
-                return;
-            }
-
-            realPosition = new Vec3(teleport.getX() / 32.0D, teleport.getY() / 32.0D, teleport.getZ() / 32.0D);
-            queuePacket(packet, event);
-        }
-    }
 
     @EventTarget
-    public void onAttack(AttackEvent event) {
-        if (!isEnabled()) {
-            return;
-        }
+    public void onAttack(AttackEvent e) {
+        if (!isEnabled()) return;
+        final Vec3 targetPos = e.getTarget().getPositionVector();
+        if (e.getTarget() instanceof EntityPlayer) {
+            if (target == null || e.getTarget() != target) {
+                vec3 = targetPos;
+            }
+            target = (EntityPlayer) e.getTarget();
 
-        Entity entity = event.getTarget();
-        if (!(entity instanceof EntityPlayer) || mc.thePlayer == null) {
-            return;
-        }
+            try {
+                final double distance = targetPos.distanceTo(mc.thePlayer.getPositionVector());
+                if (distance > maxDistance.getValue() || distance < minDistance.getValue()) return;
+            } catch (NullPointerException ignored) {
+            }
 
-        EntityPlayer attacked = (EntityPlayer) entity;
-        if (target == null || attacked != target) {
-            realPosition = attacked.getPositionVector();
+            currentLatency = (int) (Math.random() * (maxLatency.getValue() - minLatency.getValue()) + minLatency.getValue());
         }
-        target = attacked;
-
-        double distance = mc.thePlayer.getDistanceToEntity(target);
-        if (distance < distanceMin.getValue() || distance > distanceMax.getValue()) {
-            return;
-        }
-
-        int min = latencyMin.getValue();
-        int max = Math.max(min, latencyMax.getValue());
-        currentLatency = min + random.nextInt(Math.max(1, max - min + 1));
-        cycleTimer.reset();
     }
 
     @EventTarget
     public void onRender3D(Render3DEvent event) {
-        if (!isEnabled() || espMode.getValue() == 0 || target == null || realPosition == null || target.isDead || currentLatency == 0) {
+        if (target == null || vec3 == null || target.isDead || !isEnabled()) return;
+        final Vec3 pos = currentLatency > 0 ? vec3 : target.getPositionVector();
+        if (drawESP.getValue()) drawBox(pos);
+    }
+
+    @EventTarget
+    public void onReceivePacket(PacketEvent e) {
+        if (!isEnabled() || e.getType() == EventType.SEND) return;
+        Packet<?> p = e.getPacket();
+        if (skipPackets.contains(p)) {
+            skipPackets.remove(p);
             return;
         }
 
-        double x = realPosition.xCoord - mc.getRenderManager().viewerPosX;
-        double y = realPosition.yCoord - mc.getRenderManager().viewerPosY;
-        double z = realPosition.zCoord - mc.getRenderManager().viewerPosZ;
-
-        AxisAlignedBB box = new AxisAlignedBB(
-                x - target.width / 2.0D,
-                y,
-                z - target.width / 2.0D,
-                x + target.width / 2.0D,
-                y + target.height,
-                z + target.width / 2.0D
-        );
-
-        GlStateManager.pushMatrix();
-        GlStateManager.disableTexture2D();
-        GlStateManager.disableDepth();
-        GlStateManager.depthMask(false);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glLineWidth(2.0F);
-
-        Color color = getEspColor();
-        RenderGlobal.drawOutlinedBoundingBox(box, color.getRed(), color.getGreen(), color.getBlue(), 153);
-
-        GL11.glLineWidth(1.0F);
-        GL11.glDisable(GL11.GL_BLEND);
-        GlStateManager.depthMask(true);
-        GlStateManager.enableDepth();
-        GlStateManager.enableTexture2D();
-        GlStateManager.popMatrix();
-    }
-
-    private void queuePacket(Packet<?> packet, PacketEvent event) {
-        packetQueue.add(new TimedPacket(packet, currentLatency));
-        event.setCancelled(true);
-    }
-
-    private void releasePulse() {
-        if (!cycleTimer.hasTimeElapsed(currentLatency)) {
+        if (target != null && stopOnTargetHurtTime.getValue() != -1 && target.hurtTime == stopOnTargetHurtTime.getValue()) {
+            releaseAll();
             return;
         }
-
-        releaseAll();
-        cycleTimer.reset();
-    }
-
-    private void releaseSmooth() {
-        while (!packetQueue.isEmpty()) {
-            TimedPacket timedPacket = packetQueue.peek();
-            if (timedPacket == null || !timedPacket.timer.hasTimeElapsed(timedPacket.latency)) {
-                break;
-            }
-
-            packetQueue.poll();
-            receivePacket(timedPacket.packet);
-        }
-    }
-
-    private void releaseAll() {
-        while (!packetQueue.isEmpty()) {
-            TimedPacket timedPacket = packetQueue.poll();
-            if (timedPacket != null) {
-                receivePacket(timedPacket.packet);
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void receivePacket(Packet<?> packet) {
-        if (packet == null || mc.getNetHandler() == null) {
+        if (stopOnSelfHurtTime.getValue() != -1 && mc.thePlayer.hurtTime == stopOnSelfHurtTime.getValue()) {
+            releaseAll();
             return;
         }
 
         try {
-            skipPackets.add(packet);
-            ((Packet<INetHandlerPlayClient>) packet).processPacket(mc.getNetHandler());
-        } catch (ThreadQuickExitException ignored) {
+            if (mc.thePlayer == null || mc.thePlayer.ticksExisted < 20) {
+                packetQueue.clear();
+                return;
+            }
+
+            if (target == null) {
+                releaseAll();
+                return;
+            }
+
+            if (e.isCancelled()) return;
+
+            if (p instanceof S19PacketEntityStatus || p instanceof S02PacketChat || p instanceof S0BPacketAnimation || p instanceof S06PacketUpdateHealth)
+                return;
+
+            if (p instanceof S08PacketPlayerPosLook || p instanceof S40PacketDisconnect) {
+                releaseAll();
+                target = null;
+                vec3 = null;
+                return;
+
+            } else if (p instanceof S13PacketDestroyEntities) {
+                S13PacketDestroyEntities wrapper = (S13PacketDestroyEntities) p;
+                for (int id : wrapper.getEntityIDs()) {
+                    if (id == target.getEntityId()) {
+                        target = null;
+                        vec3 = null;
+                        releaseAll();
+                        return;
+                    }
+                }
+            } else if (p instanceof S14PacketEntity) {
+                S14PacketEntity wrapper = (S14PacketEntity) p;
+                if (((IAccessorS14PacketEntity) wrapper).getEntityId() == target.getEntityId()) {
+                    vec3 = vec3.add(new Vec3(wrapper.func_149062_c() / 32.0D, wrapper.func_149061_d() / 32.0D, wrapper.func_149064_e() / 32.0D));
+                }
+            } else if (p instanceof S18PacketEntityTeleport) {
+                S18PacketEntityTeleport wrapper = (S18PacketEntityTeleport) p;
+                if (wrapper.getEntityId() == target.getEntityId()) {
+                    vec3 = new Vec3(wrapper.getX() / 32.0D, wrapper.getY() / 32.0D, wrapper.getZ() / 32.0D);
+                }
+            }
+
+            packetQueue.add(new TimedPacket(p));
+            e.setCancelled(true);
+        } catch (NullPointerException ignored) {
+
         }
     }
 
-    private void resetState(boolean keepSkippedPackets) {
-        packetQueue.clear();
-        if (!keepSkippedPackets) {
-            skipPackets.clear();
-        }
-        realPosition = null;
-        target = null;
-        currentLatency = 0;
-        cycleTimer.reset();
-    }
-
-    private Color getEspColor() {
-        if (espMode.getValue() == 2) {
-            return ((HUD) Myau.moduleManager.modules.get(HUD.class)).getColor(System.currentTimeMillis());
-        }
-
-        return Color.RED;
-    }
-
-    @Override
-    public String[] getSuffix() {
-        return new String[]{String.format("%d-%dms", latencyMin.getValue(), latencyMax.getValue())};
-    }
-
-    private static class TimedPacket {
-        private final Packet<?> packet;
-        private final TimerUtil timer;
-        private final int latency;
-
-        TimedPacket(Packet<?> packet, int latency) {
-            this.packet = packet;
-            this.timer = new TimerUtil();
-            this.latency = Math.max(latency, 1);
+    private void releaseAll() {
+        if (!packetQueue.isEmpty()) {
+            for (TimedPacket timedPacket : packetQueue) {
+                Packet<?> packet = timedPacket.getPacket();
+                skipPackets.add(packet);
+                PacketUtil.receivePacket(packet);
+            }
+            packetQueue.clear();
         }
     }
 }
