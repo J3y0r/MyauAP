@@ -28,6 +28,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 
 public class Scaffold extends Module {
@@ -52,28 +53,6 @@ public class Scaffold extends Module {
     };
     private static final double STRICT_RAYCAST_INSET = 0.03125;
     private static final double RAYCAST_EPSILON = 1.0E-4;
-    private int rotationTick = 0;
-    private int lastSlot = -1;
-    private int blockCount = -1;
-    private float yaw = -180.0F;
-    private float pitch = 0.0F;
-    private boolean canRotate = false;
-    private int towerTick = 0;
-    private int towerDelay = 0;
-    private int stage = 0;
-    private int startY = 256;
-    private boolean shouldKeepY = false;
-    private boolean towering = false;
-    private int eagleDelay = 0;
-    private int keepEagleTicksLeft = 0;
-    private boolean eagleSneaking = false;
-    private int placeDelayTick = 0;
-    private EnumFacing targetFacing = null;
-    private float lastYaw = 0.0F;
-    private float lastYawChange = 0.0F;
-    private float lastPitchChange = 0.0F;
-    private final float[] lastErrors = new float[20];
-    private int errorIndex = 0;
     public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS", "PREDICTION"});
     public final ModeProperty raycastMode = new ModeProperty("raycast", 1, new String[]{"NONE", "NORMAL", "STRICT"});
     public final IntProperty placeDelay = new IntProperty("place-delay", 0, 0, 20);
@@ -86,16 +65,36 @@ public class Scaffold extends Module {
     public final ModeProperty keepY = new ModeProperty("keep-y", 0, new String[]{"NONE", "VANILLA", "EXTRA", "TELLY"});
     public final BooleanProperty keepYonPress = new BooleanProperty("keep-y-on-press", false, () -> this.keepY.getValue() != 0);
     public final BooleanProperty disableWhileJumpActive = new BooleanProperty("no-keep-y-on-jump-potion", false, () -> this.keepY.getValue() != 0);
-    public final BooleanProperty hypixelTellyBypass = new BooleanProperty("hypixel-telly-bypass", false, () -> this.keepY.getValue() == 3);
     public final BooleanProperty multiplace = new BooleanProperty("multi-place", true);
     public final BooleanProperty safeWalk = new BooleanProperty("safe-walk", true);
     public final BooleanProperty swing = new BooleanProperty("swing", true);
     public final BooleanProperty itemSpoof = new BooleanProperty("item-spoof", false);
     public final BooleanProperty eagle = new BooleanProperty("eagle", false);
-    public final IntProperty minEagleDelay = new IntProperty("min-eagle-delay", 2, 0, 10, this.eagle::getValue);
-    public final IntProperty maxEagleDelay = new IntProperty("max-eagle-delay", 3, 0, 10, this.eagle::getValue);
-    public final IntProperty keepEagleTicks = new IntProperty("keep-eagle-ticks", 3, 0, 20, this.eagle::getValue);
     public final BooleanProperty blockCounter = new BooleanProperty("block-counter", true);
+    private final float[] lastErrors = new float[20];
+    private int rotationTick = 0;
+    private int lastSlot = -1;
+    private int blockCount = -1;
+    private float yaw = -180.0F;
+    private float pitch = 0.0F;
+    private boolean canRotate = false;
+    private int towerTick = 0;
+    private int towerDelay = 0;
+    private int stage = 0;
+    private int startY = 256;
+    private boolean shouldKeepY = false;
+    private boolean towering = false;
+    private boolean eagleSneaking = false;
+    private int placeDelayTick = 0;
+    private EnumFacing targetFacing = null;
+    private float lastYaw = 0.0F;
+    private float lastYawChange = 0.0F;
+    private float lastPitchChange = 0.0F;
+    private int errorIndex = 0;
+
+    public Scaffold() {
+        super("Scaffold", false);
+    }
 
     private boolean shouldStopSprint() {
         if (this.isTowering()) {
@@ -344,25 +343,12 @@ public class Scaffold extends Module {
     }
 
     private void updateEagleState() {
-        if (this.eagleDelay > 0) {
-            this.eagleDelay--;
-        }
-        if (this.keepEagleTicksLeft > 0) {
-            this.keepEagleTicksLeft--;
-        }
         if (!this.shouldEagleSneak()) {
-            this.keepEagleTicksLeft = 0;
             this.eagleSneaking = false;
             return;
         }
-        boolean canMoveSafely = this.canEagleMoveSafely();
-        if (this.eagleDelay == 0 && canMoveSafely) {
-            this.eagleDelay = (int) RandomUtil.nextLong(this.minEagleDelay.getValue(), this.maxEagleDelay.getValue());
-        }
-        if (canMoveSafely) {
-            this.keepEagleTicksLeft = Math.max(this.keepEagleTicksLeft, this.keepEagleTicks.getValue());
-        }
-        this.eagleSneaking = this.eagleDelay > 0 || canMoveSafely || this.keepEagleTicksLeft > 0;
+
+        this.eagleSneaking = this.canEagleMoveSafely();
     }
 
     private void applyEagleSneak() {
@@ -374,10 +360,6 @@ public class Scaffold extends Module {
         } else {
             KeyBindUtil.updateKeyState(mc.gameSettings.keyBindSneak.getKeyCode());
         }
-    }
-
-    public Scaffold() {
-        super("Scaffold", false);
     }
 
     public int getSlot() {
@@ -643,15 +625,7 @@ public class Scaffold extends Module {
                     if (this.towering && (mc.thePlayer.motionY > 0.0 || mc.thePlayer.posY > (double) (this.startY + 1))) {
                         float yawDiff = MathHelper.wrapAngleTo180_float(this.yaw - event.getYaw());
                         float tolerance;
-                        if (this.hypixelTellyBypass.getValue() && this.keepY.getValue() == 3) {
-                            if (this.rotationTick == 2) {
-                                tolerance = 120.0F;
-                            } else {
-                                tolerance = 30.0F;
-                            }
-                        } else {
-                            tolerance = this.rotationTick >= 2 ? RandomUtil.nextFloat(90.0F, 95.0F) : RandomUtil.nextFloat(30.0F, 35.0F);
-                        }
+                        tolerance = this.rotationTick >= 2 ? RandomUtil.nextFloat(90.0F, 95.0F) : RandomUtil.nextFloat(30.0F, 35.0F);
                         if (Math.abs(yawDiff) > tolerance) {
                             float clampedYaw = RotationUtil.clampAngle(yawDiff, tolerance);
                             targetYaw = RotationUtil.quantizeAngle(event.getYaw() + clampedYaw);
@@ -661,9 +635,6 @@ public class Scaffold extends Module {
                     if (this.isTowering()) {
                         float yawDelta = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - event.getYaw());
                         targetYaw = RotationUtil.quantizeAngle(event.getYaw() + yawDelta * RandomUtil.nextFloat(0.98F, 0.99F));
-                        if (this.hypixelTellyBypass.getValue() && this.keepY.getValue() == 3) {
-                            targetYaw += RandomUtil.nextFloat(0.5F, 0.95F) * (Math.random() < 0.5 ? 1.0F : -1.0F);
-                        }
                         targetPitch = RotationUtil.quantizeAngle(RandomUtil.nextFloat(30.0F, 80.0F));
                         this.rotationTick = 3;
                         this.towering = true;
@@ -1003,16 +974,12 @@ public class Scaffold extends Module {
         this.towerTick = 0;
         this.towerDelay = 0;
         this.towering = false;
-        this.eagleDelay = 0;
-        this.keepEagleTicksLeft = 0;
         this.eagleSneaking = false;
         this.placeDelayTick = 0;
         this.lastYaw = 0.0F;
         this.lastYawChange = 0.0F;
         this.lastPitchChange = 0.0F;
-        for (int i = 0; i < this.lastErrors.length; i++) {
-            this.lastErrors[i] = 0.0F;
-        }
+        Arrays.fill(this.lastErrors, 0.0F);
         this.errorIndex = 0;
     }
 
@@ -1021,25 +988,8 @@ public class Scaffold extends Module {
         if (mc.thePlayer != null && this.lastSlot != -1) {
             mc.thePlayer.inventory.currentItem = this.lastSlot;
         }
-        this.eagleDelay = 0;
-        this.keepEagleTicksLeft = 0;
         this.eagleSneaking = false;
         KeyBindUtil.updateKeyState(mc.gameSettings.keyBindSneak.getKeyCode());
-    }
-
-    @Override
-    public void verifyValue(String name) {
-        switch (name) {
-            case "min-eagle-delay":
-                if (this.minEagleDelay.getValue() > this.maxEagleDelay.getValue()) {
-                    this.maxEagleDelay.setValue(this.minEagleDelay.getValue());
-                }
-                break;
-            case "max-eagle-delay":
-                if (this.minEagleDelay.getValue() > this.maxEagleDelay.getValue()) {
-                    this.minEagleDelay.setValue(this.maxEagleDelay.getValue());
-                }
-        }
     }
 
     public static class BlockData {
