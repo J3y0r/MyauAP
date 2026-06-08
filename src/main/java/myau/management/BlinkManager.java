@@ -17,10 +17,14 @@ import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C0FPacketConfirmTransaction;
 import net.minecraft.network.status.client.C00PacketServerQuery;
 import net.minecraft.network.status.client.C01PacketPing;
+import os.annotation.Native;
+import os.annotation.VMP;
 
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+@Native
+@VMP
 public class BlinkManager {
     public static Minecraft mc = Minecraft.getMinecraft();
     public BlinkModules blinkModule = BlinkModules.NONE;

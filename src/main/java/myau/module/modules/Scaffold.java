@@ -25,12 +25,16 @@ import net.minecraft.util.*;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.WorldSettings.GameType;
 import org.lwjgl.opengl.GL11;
+import os.annotation.Native;
+import os.annotation.VMP;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+@Native
+@VMP
 public class Scaffold extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final double[] placeOffsets = new double[]{

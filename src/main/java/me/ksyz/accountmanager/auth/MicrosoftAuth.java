@@ -22,6 +22,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import os.annotation.Native;
+import os.annotation.VMP;
 
 import java.io.InputStream;
 import java.net.InetSocketAddress;

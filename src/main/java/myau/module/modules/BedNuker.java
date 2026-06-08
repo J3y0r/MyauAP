@@ -43,6 +43,8 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import org.lwjgl.opengl.GL11;
+import os.annotation.Native;
+import os.annotation.VMP;
 
 import java.awt.*;
 import java.util.ArrayList;

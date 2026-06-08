@@ -4,7 +4,10 @@ import myau.mixin.IAccessorEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.*;
+import os.annotation.Native;
+import os.annotation.VMP;
 
+@Native
 public class RotationUtil {
     private static final Minecraft mc = Minecraft.getMinecraft();
 

@@ -26,10 +26,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
+import os.annotation.Native;
+import os.annotation.VMP;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 
+@Native
 public class AutoProjectiles extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     public final FloatProperty range = new FloatProperty("range", 8.0F, 3.0F, 20.0F);

@@ -42,6 +42,8 @@ import net.minecraft.network.play.server.S1CPacketEntityMetadata;
 import net.minecraft.util.*;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.WorldSettings.GameType;
+import os.annotation.Native;
+import os.annotation.VMP;
 
 import java.awt.*;
 import java.text.DecimalFormat;
@@ -50,6 +52,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Random;
 
+@Native
+@VMP
 public class KillAura extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final DecimalFormat df = new DecimalFormat("+0.0;-0.0", new DecimalFormatSymbols(Locale.US));
