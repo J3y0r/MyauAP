@@ -1,8 +1,8 @@
-package myau.ui.components;
+package myau.ui.clickgui.components;
 
 import myau.enums.ChatColors;
 import myau.property.properties.ColorProperty;
-import myau.ui.Component;
+import myau.ui.clickgui.Component;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import org.lwjgl.opengl.GL11;

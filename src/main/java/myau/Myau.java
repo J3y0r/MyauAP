@@ -3,7 +3,6 @@ package myau;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.ksyz.accountmanager.AccountManager;
-import myau.auth.AuthManager;
 import myau.command.CommandManager;
 import myau.command.commands.*;
 import myau.config.Config;
@@ -14,6 +13,8 @@ import myau.module.ModuleManager;
 import myau.module.modules.*;
 import myau.property.Property;
 import myau.property.PropertyManager;
+import os.annotation.Native;
+import os.annotation.VMP;
 
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
@@ -21,10 +22,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
 
+@Native
+@VMP(value = "Ultra")
 public class Myau {
     public static String clientName = "&7[&cM&6y&ea&au&7]&r ";
     public static String version;
-    public static AuthManager authManager;
     public static RotationManager rotationManager;
     public static FloatManager floatManager;
     public static BlinkManager blinkManager;
@@ -43,7 +45,6 @@ public class Myau {
     }
 
     public void init() {
-        authManager = AuthManager.getInstance();
         rotationManager = new RotationManager();
         floatManager = new FloatManager();
         blinkManager = new BlinkManager();
@@ -87,6 +88,7 @@ public class Myau {
         moduleManager.modules.put(ChestESP.class, new ChestESP());
         moduleManager.modules.put(ChestAura.class,  new ChestAura());
         moduleManager.modules.put(ChestStealer.class, new ChestStealer());
+        moduleManager.modules.put(ClientInfo.class, new ClientInfo());
         moduleManager.modules.put(Eagle.class, new Eagle());
         moduleManager.modules.put(ESP.class, new ESP());
         moduleManager.modules.put(FastPlace.class, new FastPlace());

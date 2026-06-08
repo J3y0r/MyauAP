@@ -13,6 +13,7 @@ import myau.module.Module;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.IntProperty;
 import myau.property.properties.ModeProperty;
+import myau.ui.clickgui.ClickGui;
 import myau.util.KeyBindUtil;
 import myau.util.PacketUtil;
 import net.minecraft.client.Minecraft;
@@ -152,7 +153,7 @@ public class InvWalk extends Module {
     public void onUpdate(UpdateEvent event) {
         if (!this.isEnabled() || event.getType() != EventType.PRE) return;
 
-        if (mc.currentScreen instanceof myau.ui.ClickGui && this.guiEnabled.getValue()) {
+        if (mc.currentScreen instanceof ClickGui && this.guiEnabled.getValue()) {
             this.pressMovementKeys(true);
             return;
         }

@@ -8,6 +8,7 @@ import myau.events.TickEvent;
 import myau.module.Module;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.IntProperty;
+import myau.ui.clickgui.ClickGui;
 import myau.util.ItemUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemBlock;
@@ -42,7 +43,7 @@ public class AutoAnduril extends Module {
             if (!(currentItem.getItem() instanceof ItemSword) && mc.thePlayer.isUsingItem()) return false;
         }
         InvWalk invWalk = (InvWalk) Myau.moduleManager.modules.get(InvWalk.class);
-        return mc.currentScreen == null || mc.currentScreen instanceof myau.ui.ClickGui
+        return mc.currentScreen == null || mc.currentScreen instanceof ClickGui
                 || invWalk.isEnabled() && invWalk.canInvWalk();
     }
 

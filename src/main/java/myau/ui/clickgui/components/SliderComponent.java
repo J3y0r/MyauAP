@@ -1,11 +1,11 @@
-package myau.ui.components;
+package myau.ui.clickgui.components;
 
 import myau.Myau;
 import myau.module.modules.HUD;
-import myau.ui.ClickGui;
-import myau.ui.Component;
-import myau.ui.callback.GuiInput;
-import myau.ui.dataset.Slider;
+import myau.ui.clickgui.ClickGui;
+import myau.ui.clickgui.Component;
+import myau.ui.clickgui.callback.GuiInput;
+import myau.ui.clickgui.dataset.Slider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import org.lwjgl.opengl.GL11;

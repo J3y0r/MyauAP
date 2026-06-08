@@ -9,9 +9,11 @@ import myau.module.modules.GuiModule;
 import myau.module.modules.HUD;
 import myau.util.ChatUtil;
 import myau.util.SoundUtil;
+import os.annotation.Native;
 
 import java.util.LinkedHashMap;
 
+@Native
 public class ModuleManager {
     private boolean sound = false;
     public final LinkedHashMap<Class<?>, Module> modules = new LinkedHashMap<>();

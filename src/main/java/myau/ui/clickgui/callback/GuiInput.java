@@ -1,4 +1,4 @@
-package myau.ui.callback;
+package myau.ui.clickgui.callback;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;

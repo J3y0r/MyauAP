@@ -1,23 +1,21 @@
-package myau.ui.components;
+package myau.ui.clickgui.components;
 
 import myau.enums.ChatColors;
-import myau.property.properties.TextProperty;
-import myau.ui.ClickGui;
-import myau.ui.Component;
-import myau.ui.callback.GuiInput;
+import myau.property.properties.BooleanProperty;
+import myau.ui.clickgui.Component;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TextComponent implements Component {
-    private final TextProperty property;
+public class CheckBoxComponent implements Component {
+    private final BooleanProperty property;
     private final ModuleComponent module;
     private int offsetY;
     private int x;
     private int y;
 
-    public TextComponent(TextProperty property, ModuleComponent parentModule, int offsetY) {
+    public CheckBoxComponent(BooleanProperty property, ModuleComponent parentModule, int offsetY) {
         this.property = property;
         this.module = parentModule;
         this.x = parentModule.category.getX() + parentModule.category.getWidth();
@@ -49,8 +47,9 @@ public class TextComponent implements Component {
 
     public void mouseDown(int x, int y, int button) {
         if (this.isHovered(x, y) && button == 0 && this.module.panelExpand) {
-            GuiInput.prompt(property.getName().replace("-", " "), property.getValue(), property::setValue, ClickGui.getInstance());
+            this.property.setValue(!this.property.getValue());
         }
+
     }
 
     @Override

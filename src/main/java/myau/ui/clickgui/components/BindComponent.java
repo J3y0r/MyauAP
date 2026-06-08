@@ -1,10 +1,10 @@
-package myau.ui.components;
+package myau.ui.clickgui.components;
 
 import myau.Myau;
 import myau.module.modules.GuiModule;
 import myau.module.modules.HUD;
-import myau.ui.Component;
-import myau.ui.dataset.BindStage;
+import myau.ui.clickgui.Component;
+import myau.ui.clickgui.dataset.BindStage;
 import myau.util.KeyBindUtil;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;

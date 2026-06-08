@@ -1,13 +1,13 @@
-package myau.ui.dataset.impl;
+package myau.ui.clickgui.dataset.impl;
 
 import myau.enums.ChatColors;
-import myau.property.properties.IntProperty;
-import myau.ui.dataset.Slider;
+import myau.property.properties.PercentProperty;
+import myau.ui.clickgui.dataset.Slider;
 
-public class IntSlider extends Slider {
-    private final IntProperty property;
+public class PercentageSlider extends Slider {
+    private final PercentProperty property;
 
-    public IntSlider(IntProperty property) {
+    public PercentageSlider(PercentProperty property) {
         this.property = property;
     }
 

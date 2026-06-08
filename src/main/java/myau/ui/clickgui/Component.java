@@ -1,4 +1,4 @@
-package myau.ui;
+package myau.ui.clickgui;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -78,6 +78,26 @@ dependencies {
     runtimeOnly("me.djtheredstoner:DevAuth-forge-legacy:1.2.1")
 }
 // Tasks:
+val exportAllDependencies by tasks.registering(Copy::class) {
+    group = "build"
+    description = "Copies all resolved dependency jars, including transitive dependencies, into build/dependencies."
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    into(layout.buildDirectory.dir("dependencies"))
+
+    from(provider {
+        listOf(
+            "annotationProcessor",
+            "compileClasspath",
+            "runtimeClasspath",
+        ).flatMap { configurationName ->
+            configurations.getByName(configurationName).resolve().filter { it.extension == "jar" }
+        }.plus(
+            shadowImpl.resolve().filter { it.extension == "jar" }
+        ).distinct()
+    })
+}
+
 tasks.withType(JavaCompile::class) {
     options.encoding = "UTF-8"
     options.release.set(8)

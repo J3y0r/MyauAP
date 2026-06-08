@@ -30,7 +30,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 新模块必须先在 `myau.Myau` 中加入 `moduleManager.modules`；否则不会收到事件，也不会进入配置读写流程。
 - 模块配置是反射注册的。启动时 `Myau` 会扫描每个模块的声明字段，把 `Property<?>` 字段收集到 `myau.property.PropertyManager`。不挂在模块字段上的设置不会出现在配置文件或 Click GUI 中。
-- `myau.ui.ClickGui` 还手工维护模块分类。给 `Myau` 注册新模块后，必须同步放进 `combatModules`、`movementModules`、`renderModules`、`playerModules`、`miscModules` 之一；否则 `ClickGui` 构造时会因“未注册到 GUI 分类”直接抛异常。
+- `myau.ui.clickgui.ClickGui` 还手工维护模块分类。给 `Myau` 注册新模块后，必须同步放进 `combatModules`、`movementModules`、
+  `renderModules`、`playerModules`、`miscModules` 之一；否则 `ClickGui` 构造时会因“未注册到 GUI 分类”直接抛异常。
 - `myau.module.ModuleManager` 负责按键切换与 HUD/聊天提示；模块自身则通过 `@EventTarget` 直接订阅事件。
 
 ## Persistence And Commands

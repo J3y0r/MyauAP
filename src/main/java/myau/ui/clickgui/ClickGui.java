@@ -1,4 +1,4 @@
-package myau.ui;
+package myau.ui.clickgui;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import myau.Myau;
 import myau.module.Module;
 import myau.module.modules.*;
-import myau.ui.components.CategoryComponent;
+import myau.ui.clickgui.components.CategoryComponent;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Mouse;
 
@@ -103,6 +103,7 @@ public class ClickGui extends GuiScreen {
         miscModules.add(Myau.moduleManager.getModule(Spammer.class));
         miscModules.add(Myau.moduleManager.getModule(BedNuker.class));
         miscModules.add(Myau.moduleManager.getModule(BedTracker.class));
+        miscModules.add(Myau.moduleManager.getModule(ClientInfo.class));
         miscModules.add(Myau.moduleManager.getModule(LightningTracker.class));
         miscModules.add(Myau.moduleManager.getModule(NoRotate.class));
         miscModules.add(Myau.moduleManager.getModule(NickHider.class));

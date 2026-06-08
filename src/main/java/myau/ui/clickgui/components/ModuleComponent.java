@@ -1,14 +1,14 @@
-package myau.ui.components;
+package myau.ui.clickgui.components;
 
 import myau.Myau;
 import myau.module.Module;
 import myau.module.modules.HUD;
 import myau.property.Property;
 import myau.property.properties.*;
-import myau.ui.Component;
-import myau.ui.dataset.impl.FloatSlider;
-import myau.ui.dataset.impl.IntSlider;
-import myau.ui.dataset.impl.PercentageSlider;
+import myau.ui.clickgui.Component;
+import myau.ui.clickgui.dataset.impl.FloatSlider;
+import myau.ui.clickgui.dataset.impl.IntSlider;
+import myau.ui.clickgui.dataset.impl.PercentageSlider;
 import net.minecraft.client.Minecraft;
 
 import java.awt.*;

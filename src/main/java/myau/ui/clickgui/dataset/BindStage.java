@@ -1,4 +1,4 @@
-package myau.ui.dataset;
+package myau.ui.clickgui.dataset;
 
 public class BindStage {
     public static String bind = "Bind";

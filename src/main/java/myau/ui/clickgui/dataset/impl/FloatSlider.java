@@ -1,8 +1,8 @@
-package myau.ui.dataset.impl;
+package myau.ui.clickgui.dataset.impl;
 
 import myau.enums.ChatColors;
 import myau.property.properties.FloatProperty;
-import myau.ui.dataset.Slider;
+import myau.ui.clickgui.dataset.Slider;
 
 public class FloatSlider extends Slider {
     private final FloatProperty property;
@@ -85,9 +85,9 @@ public class FloatSlider extends Slider {
         float remainder = positive;
         for (int i = 0; i < 6; i++) {
             long rounded = Math.round(remainder);
-            remainder = (float) (remainder * 10) - rounded * 10;
+            remainder = (remainder * 10) - rounded * 10;
             if (Math.abs(remainder) < 0.001f) {
-                return i == 0 ? 0 : i;
+                return i;
             }
         }
         return 1;
