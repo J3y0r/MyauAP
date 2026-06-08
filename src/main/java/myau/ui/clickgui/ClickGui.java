@@ -93,6 +93,7 @@ public class ClickGui extends GuiScreen {
         playerModules.add(Myau.moduleManager.getModule(Scaffold.class));
         playerModules.add(Myau.moduleManager.getModule(LegitScaffold.class));
         playerModules.add(Myau.moduleManager.getModule(AutoBlockIn.class));
+        playerModules.add(Myau.moduleManager.getModule(AutoBedDef.class));
         playerModules.add(Myau.moduleManager.getModule(SpeedMine.class));
         playerModules.add(Myau.moduleManager.getModule(FastPlace.class));
         playerModules.add(Myau.moduleManager.getModule(GhostHand.class));

@@ -7,10 +7,7 @@ import myau.event.types.Priority;
 import myau.events.*;
 import myau.management.RotationState;
 import myau.module.Module;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.IntProperty;
-import myau.property.properties.ModeProperty;
-import myau.property.properties.PercentProperty;
+import myau.property.properties.*;
 import myau.util.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -73,8 +70,15 @@ public class Scaffold extends Module {
     public final BooleanProperty safeWalk = new BooleanProperty("safe-walk", true);
     public final BooleanProperty swing = new BooleanProperty("swing", true);
     public final BooleanProperty itemSpoof = new BooleanProperty("item-spoof", false);
-    public final BooleanProperty eagle = new BooleanProperty("eagle", false);
     public final BooleanProperty blockCounter = new BooleanProperty("block-counter", true);
+    public final BooleanProperty eagle = new BooleanProperty("eagle", false);
+    public final FloatProperty edgeDistance = new FloatProperty("edge-distance", 0.13F, 0.0F, 0.5F, this.eagle::getValue);
+    public final IntProperty sneakDelay = new IntProperty("sneak-delay", 80, 0, 500, this.eagle::getValue);
+    public final IntProperty blocksPerSneak = new IntProperty("blocks-per-sneak", 1, 1, 5, this.eagle::getValue);
+    private boolean eagleSneaking = false;
+    private int eagleSneakTicks = 0;
+    private long eagleLastSneakTime = 0L;
+    private int eagleBlocksPlaced = 0;
     private final float[] lastErrors = new float[20];
     private int rotationTick = 0;
     private int lastSlot = -1;
@@ -88,7 +92,6 @@ public class Scaffold extends Module {
     private int startY = 256;
     private boolean shouldKeepY = false;
     private boolean towering = false;
-    private boolean eagleSneaking = false;
     private int placeDelayTick = 0;
     private EnumFacing targetFacing = null;
     private float lastYaw = 0.0F;
@@ -242,6 +245,7 @@ public class Scaffold extends Module {
                 if (mc.playerController.getCurrentGameType() != GameType.CREATIVE) {
                     this.blockCount--;
                 }
+                this.eagleBlocksPlaced++;
                 if (this.swing.getValue()) {
                     mc.thePlayer.swingItem();
                 } else {
@@ -295,6 +299,51 @@ public class Scaffold extends Module {
         );
     }
 
+    private boolean shouldSneak() {
+        if (!this.eagle.getValue() || !mc.thePlayer.onGround) {
+            return false;
+        }
+        if (this.eagleBlocksPlaced < this.blocksPerSneak.getValue()) {
+            return false;
+        }
+        if (System.currentTimeMillis() - this.eagleLastSneakTime < (long) this.sneakDelay.getValue()) {
+            return false;
+        }
+        return this.isNearEdge();
+    }
+
+    private boolean isNearEdge() {
+        if (!mc.thePlayer.onGround) {
+            return false;
+        }
+        double fracX = mc.thePlayer.posX - Math.floor(mc.thePlayer.posX);
+        double fracZ = mc.thePlayer.posZ - Math.floor(mc.thePlayer.posZ);
+        double threshold = this.edgeDistance.getValue();
+        double minDist = Math.min(Math.min(fracX, 1.0 - fracX), Math.min(fracZ, 1.0 - fracZ));
+        return minDist <= threshold;
+    }
+
+    private void updateEagle() {
+        if (!this.eagle.getValue()) {
+            this.eagleSneaking = false;
+            this.eagleSneakTicks = 0;
+            return;
+        }
+        if (this.eagleSneakTicks > 0) {
+            this.eagleSneakTicks--;
+            if (this.eagleSneakTicks == 0) {
+                this.eagleSneaking = false;
+            }
+            return;
+        }
+        if (this.shouldSneak()) {
+            this.eagleSneaking = true;
+            this.eagleSneakTicks = 2;
+            this.eagleLastSneakTime = System.currentTimeMillis();
+            this.eagleBlocksPlaced = 0;
+        }
+    }
+
     private boolean isDiagonal(float yaw) {
         float absYaw = Math.abs(yaw % 90.0F);
         return absYaw > 20.0F && absYaw < 70.0F;
@@ -337,35 +386,6 @@ public class Scaffold extends Module {
         }
     }
 
-    private boolean canEagleMoveSafely() {
-        double[] offset = MoveUtil.predictMovement();
-        return PlayerUtil.canMove(mc.thePlayer.motionX + offset[0], mc.thePlayer.motionZ + offset[1]);
-    }
-
-    private boolean shouldEagleSneak() {
-        return this.eagle.getValue() && ItemUtil.isHoldingBlock() && mc.thePlayer.onGround && mc.currentScreen == null;
-    }
-
-    private void updateEagleState() {
-        if (!this.shouldEagleSneak()) {
-            this.eagleSneaking = false;
-            return;
-        }
-
-        this.eagleSneaking = this.canEagleMoveSafely();
-    }
-
-    private void applyEagleSneak() {
-        if (this.eagleSneaking) {
-            KeyBindUtil.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), true);
-            mc.thePlayer.movementInput.sneak = true;
-            mc.thePlayer.movementInput.moveStrafe *= 0.3F;
-            mc.thePlayer.movementInput.moveForward *= 0.3F;
-        } else {
-            KeyBindUtil.updateKeyState(mc.gameSettings.keyBindSneak.getKeyCode());
-        }
-    }
-
     public int getSlot() {
         return this.lastSlot;
     }
@@ -373,13 +393,13 @@ public class Scaffold extends Module {
     @EventTarget(Priority.HIGH)
     public void onUpdate(UpdateEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
-            this.updateEagleState();
             if (this.rotationTick > 0) {
                 this.rotationTick--;
             }
             if (this.placeDelayTick > 0) {
                 this.placeDelayTick--;
             }
+            this.updateEagle();
             if (mc.thePlayer.onGround) {
                 if (this.stage > 0) {
                     this.stage--;
@@ -861,9 +881,13 @@ public class Scaffold extends Module {
                     && MoveUtil.isForwardPressed()) {
                 MoveUtil.fixStrafe(RotationState.getSmoothedYaw());
             }
-            this.applyEagleSneak();
             if (mc.thePlayer.onGround && this.stage > 0 && MoveUtil.isForwardPressed()) {
                 mc.thePlayer.movementInput.jump = true;
+            }
+            if (this.eagleSneaking && !mc.thePlayer.movementInput.sneak) {
+                mc.thePlayer.movementInput.sneak = true;
+                mc.thePlayer.movementInput.moveForward *= 0.3F;
+                mc.thePlayer.movementInput.moveStrafe *= 0.3F;
             }
         }
     }
@@ -978,13 +1002,16 @@ public class Scaffold extends Module {
         this.towerTick = 0;
         this.towerDelay = 0;
         this.towering = false;
-        this.eagleSneaking = false;
         this.placeDelayTick = 0;
         this.lastYaw = 0.0F;
         this.lastYawChange = 0.0F;
         this.lastPitchChange = 0.0F;
         Arrays.fill(this.lastErrors, 0.0F);
         this.errorIndex = 0;
+        this.eagleSneaking = false;
+        this.eagleSneakTicks = 0;
+        this.eagleBlocksPlaced = 0;
+        this.eagleLastSneakTime = 0L;
     }
 
     @Override
@@ -993,7 +1020,7 @@ public class Scaffold extends Module {
             mc.thePlayer.inventory.currentItem = this.lastSlot;
         }
         this.eagleSneaking = false;
-        KeyBindUtil.updateKeyState(mc.gameSettings.keyBindSneak.getKeyCode());
+        this.eagleSneakTicks = 0;
     }
 
     public static class BlockData {
