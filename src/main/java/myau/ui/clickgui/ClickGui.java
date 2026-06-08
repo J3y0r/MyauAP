@@ -31,6 +31,7 @@ public class ClickGui extends GuiScreen {
         combatModules.add(Myau.moduleManager.getModule(AutoClicker.class));
         combatModules.add(Myau.moduleManager.getModule(AutoProjectiles.class));
         combatModules.add(Myau.moduleManager.getModule(KillAura.class));
+        combatModules.add(Myau.moduleManager.getModule(JumpReset.class));
         combatModules.add(Myau.moduleManager.getModule(Wtap.class));
         combatModules.add(Myau.moduleManager.getModule(Velocity.class));
         combatModules.add(Myau.moduleManager.getModule(Freeze.class));
@@ -103,7 +104,6 @@ public class ClickGui extends GuiScreen {
         miscModules.add(Myau.moduleManager.getModule(Spammer.class));
         miscModules.add(Myau.moduleManager.getModule(BedNuker.class));
         miscModules.add(Myau.moduleManager.getModule(BedTracker.class));
-        miscModules.add(Myau.moduleManager.getModule(ClientInfo.class));
         miscModules.add(Myau.moduleManager.getModule(LightningTracker.class));
         miscModules.add(Myau.moduleManager.getModule(NoRotate.class));
         miscModules.add(Myau.moduleManager.getModule(NickHider.class));

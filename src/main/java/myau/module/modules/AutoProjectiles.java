@@ -17,6 +17,7 @@ import myau.util.RotationUtil;
 import myau.util.TeamUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -41,6 +42,9 @@ public class AutoProjectiles extends Module {
     public final IntProperty throwDelay = new IntProperty("throw-delay-ticks", 3, 1, 15, () -> !smartDelay.getValue());
     public final BooleanProperty prediction = new BooleanProperty("prediction", true);
     public final BooleanProperty teams = new BooleanProperty("teams", true);
+    public final BooleanProperty invCheck = new BooleanProperty("inv-check", true);
+    public final BooleanProperty botCheck = new BooleanProperty("bot-check", true);
+
 
     private EntityLivingBase target = null;
     private int lastSlot = -1;
@@ -206,6 +210,8 @@ public class AutoProjectiles extends Module {
     @EventTarget(Priority.HIGH)
     public void onUpdate(UpdateEvent event) {
         if (!this.isEnabled() || event.getType() != EventType.PRE) return;
+
+        if ((this.invCheck.getValue() && mc.currentScreen instanceof GuiContainer) || (!this.botCheck.getValue() || !TeamUtil.isBot((EntityPlayer) getTarget()))) return;
 
         if (!this.hasProjectile()) {
             this.target = null;

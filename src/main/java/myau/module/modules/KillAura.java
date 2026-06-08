@@ -82,6 +82,7 @@ public class KillAura extends Module {
     public final IntProperty fov;
     public final IntProperty minCPS;
     public final IntProperty maxCPS;
+    public final BooleanProperty noSwap;
     public final IntProperty maxTick;
     public final IntProperty startBlinkTick;
     public final IntProperty stopBlinkTick;
@@ -362,6 +363,7 @@ public class KillAura extends Module {
         this.fov = new IntProperty("fov", 360, 30, 360);
         this.minCPS = new IntProperty("min-aps", 14, 1, 20);
         this.maxCPS = new IntProperty("max-aps", 14, 1, 20);
+        this.noSwap = new BooleanProperty("no-swap",true,() -> this.autoBlock.getValue() == 3);
         this.maxTick = new IntProperty("max-tick", 3, 1, 5, () -> this.autoBlock.getValue() == 10);
         this.startBlinkTick = new IntProperty("start-blink-tick", 0, 0, 5, () -> this.autoBlock.getValue() == 10);
         this.stopBlinkTick = new IntProperty("stop-blink-tick", 2, 1, 5, () -> this.autoBlock.getValue() == 10);
@@ -529,8 +531,12 @@ public class KillAura extends Module {
                                             this.blockTick = 1;
                                             break;
                                         case 1:
+                                            attack = false;
+                                            this.blockTick = 2;
+                                            break;
+                                        case 2:
                                             if (this.isPlayerBlocking()) {
-                                                if (Myau.moduleManager.modules.get(NoSlow.class).isEnabled()) {
+                                                if (!noSwap.getValue()) {
                                                     int randomSlot = new Random().nextInt(9);
                                                     while (randomSlot == mc.thePlayer.inventory.currentItem) {
                                                         randomSlot = new Random().nextInt(9);
@@ -539,8 +545,8 @@ public class KillAura extends Module {
                                                     PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
                                                 }
                                                 this.stopBlock();
-                                                attack = false;
                                             }
+                                            attack = false;
                                             if (this.attackDelayMS <= 50L) {
                                                 this.blockTick = 0;
                                             }
@@ -553,6 +559,12 @@ public class KillAura extends Module {
                                 this.fakeBlockState = true;
                             } else {
                                 Myau.blinkManager.setBlinkState(false, BlinkModules.AUTO_BLOCK);
+                                int randomSlot = new Random().nextInt(9);
+                                while (randomSlot == mc.thePlayer.inventory.currentItem) {
+                                    randomSlot = new Random().nextInt(9);
+                                }
+                                PacketUtil.sendPacket(new C09PacketHeldItemChange(randomSlot));
+                                PacketUtil.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
                                 this.isBlocking = false;
                                 this.fakeBlockState = false;
                             }
