@@ -25,7 +25,7 @@ import java.util.Objects;
 @Native
 @VMP(value = "Ultra")
 public class Myau {
-    public static String clientName = "&7[&cM&6y&ea&au&7]&r ";
+    public static String clientName = "&7[&cM&6y&ea&au&bAP&7]&r ";
     public static String version;
     public static RotationManager rotationManager;
     public static FloatManager floatManager;
