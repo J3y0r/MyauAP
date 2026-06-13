@@ -145,6 +145,7 @@ public class Myau {
         moduleManager.modules.put(Xray.class, new Xray());
         moduleManager.modules.put(Stuck.class, new Stuck());
         moduleManager.modules.put(OpelGLError.class, new OpelGLError());
+        moduleManager.modules.put(WaterMark.class, new WaterMark());
         commandManager.commands.add(new BindCommand());
         commandManager.commands.add(new ConfigCommand());
         commandManager.commands.add(new DenickCommand());
