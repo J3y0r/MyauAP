@@ -83,7 +83,6 @@ public class ClickGui extends GuiScreen {
         renderModules.add(Myau.moduleManager.getModule(Trajectories.class));
         renderModules.add(Myau.moduleManager.getModule(Radar.class));
         renderModules.add(Myau.moduleManager.getModule(OpelGLError.class));
-        renderModules.add(Myau.moduleManager.getModule(WaterMark.class));
 
         List<Module> playerModules = new ArrayList<>();
         playerModules.add(Myau.moduleManager.getModule(AutoHeal.class));
