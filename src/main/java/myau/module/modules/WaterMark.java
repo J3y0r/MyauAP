@@ -36,7 +36,7 @@ public class WaterMark extends Module {
         if (this.isEnabled() && !mc.gameSettings.showDebugInfo) {
             ScaledResolution sr = new ScaledResolution(mc);
             float padding = 3.0F;
-            String displayText = this.showFps.getValue() ? TEXT + "(" + Minecraft.debugFPS + "fps)" : TEXT;
+            String displayText = this.showFps.getValue() ? TEXT + "(" + Minecraft.getDebugFPS() + "fps)" : TEXT;
             float textW = (float) mc.fontRendererObj.getStringWidth(displayText);
             float textH = (float) mc.fontRendererObj.FONT_HEIGHT;
             boolean isBoxed = this.style.getValue() == 1;
