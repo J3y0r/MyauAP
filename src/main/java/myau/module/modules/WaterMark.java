@@ -25,6 +25,7 @@ public class WaterMark extends Module {
     public final ColorProperty boxColor = new ColorProperty("box-color", Color.WHITE.getRGB(), () -> this.style.getValue() == 1);
     public final PercentProperty background = new PercentProperty("background", 25, () -> this.style.getValue() == 1);
     public final BooleanProperty shadow = new BooleanProperty("shadow", true);
+    public final BooleanProperty showFps = new BooleanProperty("show-fps", false);
 
     public WaterMark() {
         super("WaterMark", false);
@@ -35,7 +36,8 @@ public class WaterMark extends Module {
         if (this.isEnabled() && !mc.gameSettings.showDebugInfo) {
             ScaledResolution sr = new ScaledResolution(mc);
             float padding = 3.0F;
-            float textW = (float) mc.fontRendererObj.getStringWidth(TEXT);
+            String displayText = this.showFps.getValue() ? TEXT + "(" + Minecraft.debugFPS + "fps)" : TEXT;
+            float textW = (float) mc.fontRendererObj.getStringWidth(displayText);
             float textH = (float) mc.fontRendererObj.FONT_HEIGHT;
             boolean isBoxed = this.style.getValue() == 1;
 
@@ -93,7 +95,7 @@ public class WaterMark extends Module {
 
             GlStateManager.disableDepth();
             mc.fontRendererObj.drawString(
-                    TEXT,
+                    displayText,
                     sx, sy,
                     this.textColor.getValue(),
                     this.shadow.getValue()
