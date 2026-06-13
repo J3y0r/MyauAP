@@ -1,5 +1,6 @@
 package myau.module.modules;
 
+import myau.module.modules.*;
 import myau.Myau;
 import myau.enums.BlinkModules;
 import myau.enums.ChatColors;
@@ -178,6 +179,12 @@ public class HUD extends Module {
             }
             if (this.posY.getValue() == 1) {
                 y = (float) new ScaledResolution(mc).getScaledHeight() - y - height * this.scale.getValue();
+            }
+            // WaterMark offset
+            WaterMark waterMark = (WaterMark) Myau.moduleManager.modules.get(WaterMark.class);
+            if (waterMark != null && waterMark.isEnabled() && waterMark.alignHud.getValue() && this.posY.getValue() == 0) {
+                float wmPadding = waterMark.style.getValue() == 1 ? 8.0F : 4.0F;
+                y += (mc.fontRendererObj.FONT_HEIGHT + wmPadding -3) * waterMark.scale.getValue();//////////////////////////////////
             }
             GlStateManager.pushMatrix();
             GlStateManager.scale(this.scale.getValue(), this.scale.getValue(), 0.0F);
