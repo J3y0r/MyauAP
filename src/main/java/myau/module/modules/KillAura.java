@@ -52,8 +52,6 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Random;
 
-@Native
-@VMP
 public class KillAura extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final DecimalFormat df = new DecimalFormat("+0.0;-0.0", new DecimalFormatSymbols(Locale.US));

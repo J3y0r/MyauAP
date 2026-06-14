@@ -23,8 +23,6 @@ import os.annotation.VMP;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-@Native
-@VMP
 public class BlinkManager {
     public static Minecraft mc = Minecraft.getMinecraft();
     public BlinkModules blinkModule = BlinkModules.NONE;

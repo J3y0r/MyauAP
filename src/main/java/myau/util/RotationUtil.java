@@ -7,7 +7,6 @@ import net.minecraft.util.*;
 import os.annotation.Native;
 import os.annotation.VMP;
 
-@Native
 public class RotationUtil {
     private static final Minecraft mc = Minecraft.getMinecraft();
 
