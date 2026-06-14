@@ -169,6 +169,10 @@ public class HUD extends Module {
 
         float sx = x / wmScale;
         float sy = baseY / wmScale;
+        if (this.posX.getValue() == 1) {
+            float totalW = (float) mc.fontRendererObj.getStringWidth(displayText);
+            sx -= totalW;
+        }
         int color = this.getWatermarkColor();
 
         GlStateManager.disableDepth();
