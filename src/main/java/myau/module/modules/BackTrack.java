@@ -157,7 +157,7 @@ public class BackTrack extends Module {
 
     @Override
     public String[] getSuffix() {
-        return new String[]{minLatency.getValue() + "-" + maxLatency.getValue()};
+        return new String[]{minLatency.getValue() + "-" + maxLatency.getValue() + "ms"};
     }
 
     @Override
