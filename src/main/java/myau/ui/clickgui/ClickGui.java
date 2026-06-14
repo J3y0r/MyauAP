@@ -9,6 +9,7 @@ import myau.module.modules.*;
 import myau.ui.clickgui.components.CategoryComponent;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Mouse;
+import os.annotation.Native;
 
 import java.awt.*;
 import java.io.File;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
+@Native
 public class ClickGui extends GuiScreen {
     private static ClickGui instance;
     private final File configFile = new File("./config/Myau/", "clickgui.txt");
@@ -83,7 +85,6 @@ public class ClickGui extends GuiScreen {
         renderModules.add(Myau.moduleManager.getModule(Trajectories.class));
         renderModules.add(Myau.moduleManager.getModule(Radar.class));
         renderModules.add(Myau.moduleManager.getModule(OpelGLError.class));
-        renderModules.add(Myau.moduleManager.getModule(WaterMark.class));
 
         List<Module> playerModules = new ArrayList<>();
         playerModules.add(Myau.moduleManager.getModule(AutoHeal.class));

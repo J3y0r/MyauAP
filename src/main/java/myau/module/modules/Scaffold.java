@@ -30,8 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
-@Native
-@VMP
 public class Scaffold extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final double[] placeOffsets = new double[]{

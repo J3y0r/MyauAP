@@ -1,6 +1,5 @@
 package myau.module.modules;
 
-import myau.module.modules.*;
 import myau.Myau;
 import myau.enums.BlinkModules;
 import myau.enums.ChatColors;
@@ -28,7 +27,6 @@ import java.util.stream.Collectors;
 
 public class HUD extends Module {
     private static final Minecraft mc = Minecraft.getMinecraft();
-    private List<Module> activeModules = new ArrayList<>();
     public final ModeProperty colorMode = new ModeProperty(
             "color", 3, new String[]{"RAINBOW", "CHROMA", "ASTOLFO", "CUSTOM1", "CUSTOM12", "CUSTOM123"}
     );
@@ -52,6 +50,20 @@ public class HUD extends Module {
     public final BooleanProperty blinkTimer = new BooleanProperty("blink-timer", true);
     public final BooleanProperty toggleSound = new BooleanProperty("toggle-sounds", true);
     public final BooleanProperty toggleAlerts = new BooleanProperty("toggle-alerts", false);
+    // WaterMark properties
+    public final BooleanProperty watermarkEnabled = new BooleanProperty("watermark", false);
+    public final ModeProperty watermarkStyle = new ModeProperty("watermark-style", 0, new String[]{"PLAIN", "BOXED"}, this.watermarkEnabled::getValue);
+    public final ColorProperty watermarkBoxColor = new ColorProperty("watermark-box-color", Color.WHITE.getRGB(), () -> this.watermarkEnabled.getValue() && this.watermarkStyle.getValue() == 1);
+    public final FloatProperty watermarkScale = new FloatProperty("watermark-scale", 1.2F, 0.5F, 1.5F, this.watermarkEnabled::getValue);
+    public final ModeProperty watermarkColorMode = new ModeProperty("watermark-color", 0, new String[]{"CUSTOM", "HUD"}, this.watermarkEnabled::getValue);
+    public final ColorProperty watermarkCustomColor = new ColorProperty("watermark-custom-color", Color.WHITE.getRGB(), () -> this.watermarkEnabled.getValue() && this.watermarkColorMode.getValue() == 0);
+    public final BooleanProperty watermarkShadow = new BooleanProperty("watermark-shadow", true, this.watermarkEnabled::getValue);
+    public final BooleanProperty watermarkShowFps = new BooleanProperty("watermark-show-fps", false, this.watermarkEnabled::getValue);
+    private List<Module> activeModules = new ArrayList<>();
+
+    public HUD() {
+        super("HUD", true, true);
+    }
 
     private String getModuleName(Module module) {
         String moduleName = module.getName();
@@ -90,10 +102,6 @@ public class HUD extends Module {
     private float getColorCycle(long long3, long long4) {
         long speed = (long) (3000.0 / Math.pow(Math.min(Math.max(0.5F, this.colorSpeed.getValue()), 1.5F), 3.0));
         return 1.0F - (float) (Math.abs(long3 - long4 * 300L) % speed) / (float) speed;
-    }
-
-    public HUD() {
-        super("HUD", true, true);
     }
 
     public Color getColor(long time) {
@@ -144,6 +152,55 @@ public class HUD extends Module {
         );
     }
 
+    private int getWatermarkColor() {
+        if (this.watermarkColorMode.getValue() == 1) {
+            return this.getColor(System.currentTimeMillis()).getRGB();
+        }
+        return this.watermarkCustomColor.getValue();
+    }
+
+    private float renderWatermark(float x, float baseY) {
+        final String TEXT = "MyauAP";
+        float padding = 3.0F;
+        String displayText = this.watermarkShowFps.getValue()
+                ? TEXT + " (" + Minecraft.getDebugFPS() + "fps)" : TEXT;
+        float textW = (float) mc.fontRendererObj.getStringWidth(displayText);
+        float textH = (float) mc.fontRendererObj.FONT_HEIGHT;
+        boolean isBoxed = this.watermarkStyle.getValue() == 1;
+        float wmScale = this.watermarkScale.getValue();
+
+        GlStateManager.pushMatrix();
+        GlStateManager.scale(wmScale, wmScale, 0.0F);
+
+        float sx = x / wmScale;
+        float sy = baseY / wmScale;
+        int color = this.getWatermarkColor();
+
+        if (isBoxed) {
+            RenderUtil.enableRenderState();
+            RenderUtil.drawOutlineRect(
+                    sx, sy,
+                    sx + textW + padding * 2.0F, sy + textH + padding * 2.0F,
+                    1.5F, 0, this.watermarkBoxColor.getValue()
+            );
+            RenderUtil.disableRenderState();
+            sx += padding;
+            sy += padding;
+        }
+
+        GlStateManager.disableDepth();
+        float cursor = sx;
+        mc.fontRendererObj.drawString("M", cursor, sy, color, this.watermarkShadow.getValue());
+        cursor += mc.fontRendererObj.getStringWidth("M");
+        mc.fontRendererObj.drawString(displayText.substring(1), cursor, sy, Color.WHITE.getRGB(), this.watermarkShadow.getValue());
+        GlStateManager.enableDepth();
+
+        GlStateManager.popMatrix();
+
+        float totalH = isBoxed ? textH + padding * 2.0F : textH;
+        return totalH * wmScale;
+    }
+
     @EventTarget
     public void onTick(TickEvent event) {
         if (this.isEnabled() && event.getType() == EventType.POST) {
@@ -180,11 +237,14 @@ public class HUD extends Module {
             if (this.posY.getValue() == 1) {
                 y = (float) new ScaledResolution(mc).getScaledHeight() - y - height * this.scale.getValue();
             }
-            // WaterMark offset
-            WaterMark waterMark = (WaterMark) Myau.moduleManager.modules.get(WaterMark.class);
-            if (waterMark != null && waterMark.isEnabled() && waterMark.alignHud.getValue() && this.posY.getValue() == 0) {
-                float wmPadding = waterMark.style.getValue() == 1 ? 8.0F : 4.0F;
-                y += (mc.fontRendererObj.FONT_HEIGHT + wmPadding -3) * waterMark.scale.getValue();//////////////////////////////////
+            // WaterMark rendering & ArrayList offset
+            float watermarkHeight = 0.0F;
+            if (this.watermarkEnabled.getValue()) {
+                if (this.posY.getValue() == 0) {
+                    // TOP: watermark above ArrayList
+                    watermarkHeight = this.renderWatermark(x, y);
+                    y += watermarkHeight;
+                }
             }
             GlStateManager.pushMatrix();
             GlStateManager.scale(this.scale.getValue(), this.scale.getValue(), 0.0F);
@@ -272,6 +332,10 @@ public class HUD extends Module {
                 }
                 y += (height + (this.shadow.getValue() ? 1.0F : 0.0F)) * this.scale.getValue() * (this.posY.getValue() == 0 ? 1.0F : -1.0F);
                 offset++;
+            }
+            // WaterMark BOTTOM rendering
+            if (this.watermarkEnabled.getValue() && this.posY.getValue() == 1) {
+                this.renderWatermark(x, y);
             }
             if (this.blinkTimer.getValue()) {
                 BlinkModules blinkingModule = Myau.blinkManager.getBlinkingModule();
