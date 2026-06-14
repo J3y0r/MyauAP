@@ -15,7 +15,7 @@ public class OpelGLError extends Module {
     public final FloatProperty delay = new FloatProperty("delay", 2.0F, 0.1F, 60.0F);
 
     public OpelGLError() {
-        super("OpelGLError", false);
+        super("OpelGLError", false, true);
     }
 
     @EventTarget
