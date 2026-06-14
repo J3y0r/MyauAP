@@ -53,10 +53,10 @@ public class HUD extends Module {
     // WaterMark properties
     public final BooleanProperty watermarkEnabled = new BooleanProperty("watermark", false);
     public final ModeProperty watermarkStyle = new ModeProperty("watermark-style", 0, new String[]{"PLAIN", "BOXED"}, this.watermarkEnabled::getValue);
-    public final ColorProperty watermarkBoxColor = new ColorProperty("watermark-box-color", Color.WHITE.getRGB(), () -> this.watermarkEnabled.getValue() && this.watermarkStyle.getValue() == 0);
+    public final ColorProperty watermarkBoxColor = new ColorProperty("watermark-box-color", Color.WHITE.getRGB(), () -> this.watermarkEnabled.getValue() && this.watermarkStyle.getValue() == 1);
     public final FloatProperty watermarkScale = new FloatProperty("watermark-scale", 1.2F, 0.5F, 1.5F, this.watermarkEnabled::getValue);
     public final ModeProperty watermarkColorMode = new ModeProperty("watermark-color", 0, new String[]{"CUSTOM", "HUD"}, this.watermarkEnabled::getValue);
-    public final ColorProperty watermarkCustomColor = new ColorProperty("watermark-custom-color", Color.WHITE.getRGB(), () -> this.watermarkEnabled.getValue() && this.watermarkColorMode.getValue() == 1);
+    public final ColorProperty watermarkCustomColor = new ColorProperty("watermark-custom-color", Color.WHITE.getRGB(), () -> this.watermarkEnabled.getValue() && this.watermarkColorMode.getValue() == 0);
     public final BooleanProperty watermarkShadow = new BooleanProperty("watermark-shadow", true, this.watermarkEnabled::getValue);
     public final BooleanProperty watermarkShowFps = new BooleanProperty("watermark-show-fps", false, this.watermarkEnabled::getValue);
     private List<Module> activeModules = new ArrayList<>();
