@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import myau.Myau;
 import myau.module.Module;
 import myau.module.modules.*;
+import myau.script.ScriptModule;
 import myau.ui.clickgui.components.CategoryComponent;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Mouse;
@@ -117,6 +118,12 @@ public class ClickGui extends GuiScreen {
         miscModules.add(Myau.moduleManager.getModule(InventoryClicker.class));
         miscModules.add(Myau.moduleManager.getModule(ClientInfo.class));
 
+        // Scripts category - dynamically populated from ScriptManager
+        List<Module> scriptModules = new ArrayList<>();
+        for (Module mod : Myau.scriptManager.getScriptModules()) {
+            scriptModules.add(mod);
+        }
+
         Comparator<Module> comparator = Comparator.comparing(m -> m.getName().toLowerCase());
         combatModules.sort(comparator);
         movementModules.sort(comparator);
@@ -130,6 +137,7 @@ public class ClickGui extends GuiScreen {
         registered.addAll(renderModules);
         registered.addAll(playerModules);
         registered.addAll(miscModules);
+        registered.addAll(scriptModules);
 
         for (Module module : Myau.moduleManager.modules.values()) {
             if (!registered.contains(module)) {
@@ -164,6 +172,11 @@ public class ClickGui extends GuiScreen {
         CategoryComponent misc = new CategoryComponent("Misc", miscModules);
         misc.setY(topOffset);
         categoryList.add(misc);
+        topOffset += 20;
+
+        CategoryComponent scripts = new CategoryComponent("Scripts", scriptModules);
+        scripts.setY(topOffset);
+        categoryList.add(scripts);
 
         loadPositions();
     }

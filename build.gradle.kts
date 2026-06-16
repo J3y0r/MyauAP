@@ -76,6 +76,15 @@ dependencies {
     shadowImpl("org.slick2d:slick2d-core:1.0.2") {//add again
         isTransitive = false
     }
+    shadowImpl("org.joml:joml:1.10.8") {
+        isTransitive = false
+    }
+    shadowImpl("org.luaj:luaj-jse:3.0.1") {
+        isTransitive = false
+    }
+    shadowImpl("com.github.psnrigner:discord-rpc-java:1.0.4") {
+        isTransitive = false
+    }
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT")
     // If you don't want to log in with your real minecraft account, remove this line
     runtimeOnly("me.djtheredstoner:DevAuth-forge-legacy:1.2.1")

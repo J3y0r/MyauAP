@@ -13,6 +13,8 @@ import myau.module.ModuleManager;
 import myau.module.modules.*;
 import myau.property.Property;
 import myau.property.PropertyManager;
+import myau.script.ScriptManager;
+import myau.script.ScriptModule;
 import os.annotation.Native;
 import os.annotation.VMP;
 
@@ -39,6 +41,7 @@ public class Myau {
     public static PropertyManager propertyManager;
     public static ModuleManager moduleManager;
     public static CommandManager commandManager;
+    public static ScriptManager scriptManager;
 
     public Myau() {
         this.init();
@@ -57,6 +60,7 @@ public class Myau {
         propertyManager = new PropertyManager();
         moduleManager = new ModuleManager();
         commandManager = new CommandManager();
+        scriptManager = new ScriptManager();
         // EventManager.register(authManager);
         EventManager.register(rotationManager);
         EventManager.register(floatManager);
@@ -66,6 +70,7 @@ public class Myau {
         EventManager.register(badPacketsManager);
         EventManager.register(moduleManager);
         EventManager.register(commandManager);
+        EventManager.register(scriptManager);
         moduleManager.modules.put(AimAssist.class, new AimAssist());
         moduleManager.modules.put(AutoL.class, new AutoL());
         moduleManager.modules.put(AutoProjectiles.class, new AutoProjectiles());
@@ -160,6 +165,8 @@ public class Myau {
         commandManager.commands.add(new TargetCommand());
         commandManager.commands.add(new ToggleCommand());
         commandManager.commands.add(new VclipCommand());
+        commandManager.commands.add(new ScriptCommand());
+        scriptManager.init();
         for (Module module : moduleManager.modules.values()) {
             ArrayList<Property<?>> properties = new ArrayList<>();
             for (final Field field : module.getClass().getDeclaredFields()) {
@@ -178,6 +185,7 @@ public class Myau {
             propertyManager.properties.put(module.getClass(), properties);
             EventManager.register(module);
         }
+        propertyManager.properties.put(ScriptModule.class, new ArrayList<>()); // prevent NPE in ClickGUI
         Config config = new Config("default", true);
         if (config.file.exists()) {
             config.load();
