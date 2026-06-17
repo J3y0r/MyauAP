@@ -10,6 +10,7 @@ import myau.events.TickEvent;
 import myau.mixin.IAccessorGuiChat;
 import myau.module.Module;
 import myau.property.properties.*;
+import myau.script.ScriptModule;
 import myau.util.ColorUtil;
 import myau.util.RenderUtil;
 import net.minecraft.client.Minecraft;
@@ -190,7 +191,18 @@ public class HUD extends Module {
     @EventTarget
     public void onTick(TickEvent event) {
         if (this.isEnabled() && event.getType() == EventType.POST) {
-            this.activeModules = Myau.moduleManager.modules.values().stream().filter(module -> module.isEnabled() && !module.isHidden()).sorted(Comparator.comparingInt(this::getModuleWidth).reversed()).collect(Collectors.<Module>toList());
+            List<Module> moduleList = Myau.moduleManager.modules.values().stream()
+                    .filter(module -> module.isEnabled() && !module.isHidden())
+                    .collect(Collectors.<Module>toList());
+            // Include enabled script modules
+            for (ScriptModule sm : Myau.scriptManager.getScriptModules()) {
+                if (sm.isEnabled() && !sm.isHidden()) {
+                    moduleList.add(sm);
+                }
+            }
+            this.activeModules = moduleList.stream()
+                    .sorted(Comparator.comparingInt(this::getModuleWidth).reversed())
+                    .collect(Collectors.<Module>toList());
         }
     }
 
