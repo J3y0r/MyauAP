@@ -117,6 +117,7 @@ public class ClickGui extends GuiScreen {
         miscModules.add(Myau.moduleManager.getModule(AutoAnduril.class));
         miscModules.add(Myau.moduleManager.getModule(InventoryClicker.class));
         miscModules.add(Myau.moduleManager.getModule(ClientInfo.class));
+        miscModules.add(Myau.moduleManager.getModule(Disabler.class));
 
         // Scripts category - dynamically populated from ScriptManager
         List<Module> scriptModules = new ArrayList<>();
