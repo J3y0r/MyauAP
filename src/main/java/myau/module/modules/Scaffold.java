@@ -22,8 +22,6 @@ import net.minecraft.util.*;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.WorldSettings.GameType;
 import org.lwjgl.opengl.GL11;
-import os.annotation.Native;
-import os.annotation.VMP;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -61,7 +59,7 @@ public class Scaffold extends Module {
     public final PercentProperty airMotion = new PercentProperty("air-motion", 100);
     public final PercentProperty speedMotion = new PercentProperty("speed-motion", 100);
     public final ModeProperty tower = new ModeProperty("tower", 0, new String[]{"NONE", "VANILLA", "EXTRA", "TELLY"});
-    public final ModeProperty keepY = new ModeProperty("keep-y", 0, new String[]{"NONE", "VANILLA", "EXTRA", "TELLY"});
+    public final ModeProperty keepY = new ModeProperty("keep-y", 0, new String[]{"NONE", "VANILLA", "EXTRA", "TELLY", "EXTRA_TELLY"});
     public final BooleanProperty keepYonPress = new BooleanProperty("keep-y-on-press", false, () -> this.keepY.getValue() != 0);
     public final BooleanProperty disableWhileJumpActive = new BooleanProperty("no-keep-y-on-jump-potion", false, () -> this.keepY.getValue() != 0);
     public final BooleanProperty multiplace = new BooleanProperty("multi-place", true);
@@ -96,6 +94,7 @@ public class Scaffold extends Module {
     private float lastYawChange = 0.0F;
     private float lastPitchChange = 0.0F;
     private int errorIndex = 0;
+    private boolean placedThisTick = false;
 
     public Scaffold() {
         super("Scaffold", false);
@@ -105,7 +104,7 @@ public class Scaffold extends Module {
         if (this.isTowering()) {
             return false;
         } else {
-            boolean stage = this.keepY.getValue() == 1 || this.keepY.getValue() == 2;
+            boolean stage = this.keepY.getValue() == 1 || this.keepY.getValue() == 2 || this.keepY.getValue() == 4;
             return (!stage || this.stage <= 0) && this.sprintMode.getValue() == 0;
         }
     }
@@ -243,6 +242,7 @@ public class Scaffold extends Module {
                 if (mc.playerController.getCurrentGameType() != GameType.CREATIVE) {
                     this.blockCount--;
                 }
+                this.placedThisTick = true;
                 this.eagleBlocksPlaced++;
                 if (this.swing.getValue()) {
                     mc.thePlayer.swingItem();
@@ -376,7 +376,7 @@ public class Scaffold extends Module {
 
     private boolean isTowering() {
         if (mc.thePlayer.onGround && MoveUtil.isForwardPressed() && !PlayerUtil.isAirAbove()) {
-            boolean keepY = this.keepY.getValue() == 3;
+            boolean keepY = this.keepY.getValue() == 3 || this.keepY.getValue() == 4;
             boolean tower = this.tower.getValue() == 3;
             return keepY && this.stage > 0 || tower && mc.gameSettings.keyBindJump.isKeyDown();
         } else {
@@ -391,6 +391,7 @@ public class Scaffold extends Module {
     @EventTarget(Priority.HIGH)
     public void onUpdate(UpdateEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
+            this.placedThisTick = false;
             if (this.rotationTick > 0) {
                 this.rotationTick--;
             }
@@ -699,7 +700,7 @@ public class Scaffold extends Module {
                     }
                 }
                 if (this.targetFacing != null) {
-                    if (this.rotationTick <= 0 && this.placeDelayTick <= 0) {
+                    if (this.rotationTick <= 0 && this.placeDelayTick <= 0 && !this.placedThisTick) {
                         int playerBlockX = MathHelper.floor_double(mc.thePlayer.posX);
                         int playerBlockY = MathHelper.floor_double(mc.thePlayer.posY);
                         int playerBlockZ = MathHelper.floor_double(mc.thePlayer.posZ);
@@ -711,12 +712,12 @@ public class Scaffold extends Module {
                         }
                     }
                     this.targetFacing = null;
-                } else if (this.keepY.getValue() == 2 && this.stage > 0 && !mc.thePlayer.onGround) {
+                } else if ((this.keepY.getValue() == 2 || this.keepY.getValue() == 4) && this.stage > 0 && !mc.thePlayer.onGround) {
                     int nextBlockY = MathHelper.floor_double(mc.thePlayer.posY + mc.thePlayer.motionY);
                     if (nextBlockY <= this.startY && mc.thePlayer.posY > (double) (this.startY + 1)) {
                         this.shouldKeepY = true;
                         blockData = this.getBlockData();
-                        if (blockData != null && this.rotationTick <= 0 && this.placeDelayTick <= 0) {
+                        if (blockData != null && this.rotationTick <= 0 && this.placeDelayTick <= 0 && !this.placedThisTick) {
                             hitVec = this.getPlaceHitVec(blockData.blockPos(), blockData.facing(), this.yaw, this.pitch);
                             if (hitVec != null) {
                                 this.place(blockData.blockPos(), blockData.facing(), hitVec);
